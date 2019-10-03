@@ -1,7 +1,7 @@
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
 
 public class QueryListeningAgent extends Agent {
 	public void setup() {
@@ -9,18 +9,19 @@ public class QueryListeningAgent extends Agent {
 	}
 
 	class QueryListeningBehaviour extends CyclicBehaviour {
-		MessageTemplate mt = 
-				MessageTemplate.MatchPerformative(ACLMessage.QUERY_IF);
+		AID listener = new AID("listener", AID.ISLOCALNAME);
 		@Override
 		public void action() {
-			ACLMessage msg = receive(mt);
-			if(msg != null) {
-				System.out.println(mt);
-				ACLMessage reply = msg.createReply();
-				reply.setPerformative(ACLMessage.INFORM);
-				reply.setContent("Don't have a clue...");
-				send(reply);
-			} else block();
+			ACLMessage reply = receive();
+			if(reply == null){
+				ACLMessage msg = new ACLMessage( ACLMessage.INFORM );
+				msg.setContent("Just wanted to say hi!" );
+				msg.addReceiver(listener);
+				send(msg);
+			}
+			else
+				System.out.println("Reply: " + reply.getContent());
+			block();
 		}
 	}
 }

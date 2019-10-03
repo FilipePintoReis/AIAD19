@@ -12,14 +12,16 @@ public class ListeningAgent extends Agent {
 		@Override
 		public void action() {
 			ACLMessage msg = receive();
-			if(msg != null)
-			{
-				System.out.println(msg);
+			if (msg!=null){
+				System.out.println(
+						" - " + myAgent.getLocalName() + " <- " + 
+								msg.getContent());
 				ACLMessage reply = msg.createReply();
-				reply.setPerformative(ACLMessage.INFORM);
-				reply.setContent("Got your message!");
-				send(reply);
-			}else block();
+                reply.setPerformative( ACLMessage.INFORM );
+                reply.setContent(" Howdy" );
+                send(reply);
+			}
+			block();
 		}		
 	}
 }
