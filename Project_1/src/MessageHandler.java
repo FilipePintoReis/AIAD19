@@ -14,7 +14,7 @@ public class MessageHandler {
 	public static ACLMessage getDeathMessage()
 	{
 		ACLMessage msgDeath = new ACLMessage(ACLMessage.INFORM);
-		msgDeath.setContent("BIRTH");
+		msgDeath.setContent("DEATH");
 		msgDeath.addReceiver(overseer);
 		return msgDeath;
 	}
