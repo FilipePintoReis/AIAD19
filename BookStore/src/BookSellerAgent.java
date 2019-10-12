@@ -11,7 +11,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
-public class BookSeller extends Agent {
+public class BookSellerAgent extends Agent {
 
 	private Hashtable catalogue;
 	//	private BookSellerGui gui;
