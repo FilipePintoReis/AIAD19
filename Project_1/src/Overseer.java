@@ -4,6 +4,8 @@ import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import java.util.HashMap;
 
+
+//TODO register in DF
 public class Overseer extends Agent
 {
 	HashMap<AID, Integer> playerMap;
