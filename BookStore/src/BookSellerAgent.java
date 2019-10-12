@@ -12,12 +12,13 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
 public class BookSellerAgent extends Agent {
-
-	private Hashtable catalogue;
-	//	private BookSellerGui gui;
+	// The catalogue of books for sale (maps the title of a book to its price)
+	private Hashtable<String, Integer> catalogue;
+	// The GUI by means of which the user can add books in the catalogue
+	private BookSellerGui gui;
 
 	protected void setup() {
-		catalogue = new Hashtable();
+		catalogue = new Hashtable<String, Integer>();
 
 		// Register the book-selling service in the yellow pages
 		DFAgentDescription dfd = new DFAgentDescription();
@@ -32,8 +33,8 @@ public class BookSellerAgent extends Agent {
 		catch (FIPAException fe) {
 			fe.printStackTrace();
 		}
-		//		gui = new BookSellerGui(this);
-		//		gui.show();
+		gui = new BookSellerGui(this);
+		gui.showGui();
 
 		addBehaviour(new OfferRequestServer());
 		addBehaviour(new PurchaseOrdersServer());
@@ -52,7 +53,7 @@ public class BookSellerAgent extends Agent {
 				String title = msg.getContent();
 				ACLMessage reply = msg.createReply();
 
-				Integer price = (Integer) catalogue.get(title);
+				Integer price = catalogue.get(title);
 				if(price != null)
 				{
 					// Requested book available. Reply price
@@ -83,7 +84,7 @@ public class BookSellerAgent extends Agent {
 				String title = msg.getContent();
 				ACLMessage reply = msg.createReply();
 
-				Integer price = (Integer) catalogue.remove(title);
+				Integer price = catalogue.remove(title);
 				if (price != null)
 				{
 					reply.setPerformative(ACLMessage.INFORM);
@@ -112,18 +113,18 @@ public class BookSellerAgent extends Agent {
 		{
 			fe.printStackTrace();
 		}
-
-		//		gui.dispose();
+		// Close the GUI
+		gui.dispose();
 		// Printout dismissal message
 		System.out.println("Seller-agent" + getAID().getName() + "terminating.");
 	}
 
-	public void updateCatalogue (final String title, final int price) {
+	public void updateCatalogue (final String title, final Integer price) {
 
 		addBehaviour(new OneShotBehaviour(){
 			public void action() {
-				catalogue.put(title, new Integer(price));
-				System.out.println(title+" inserted into catalogue. Price = "+price);
+				catalogue.put(title, price);
+				System.out.println(title + " inserted into catalogue. Price = " + price);
 			}
 		});
 	}

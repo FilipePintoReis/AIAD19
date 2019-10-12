@@ -24,7 +24,7 @@ public class BookBuyerAgent extends Agent
 		Object[] args = getArguments();
 		if(args != null && args.length > 0) {
 			targetBookTitle = (String) args[0];
-			System.out.println("Trying to buy" + targetBookTitle);
+			System.out.println("Trying to buy " + targetBookTitle);
 
 			// Add a TickerBehaviour that schedules a request to seller agents every minute
 			addBehaviour(new TickerBehaviour(this, 60000)
