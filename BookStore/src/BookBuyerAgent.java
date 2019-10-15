@@ -9,6 +9,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
+@SuppressWarnings("serial")
 public class BookBuyerAgent extends Agent 
 {
 	// The title of the book to buy
@@ -27,28 +28,7 @@ public class BookBuyerAgent extends Agent
 			System.out.println("Trying to buy " + targetBookTitle);
 
 			// Add a TickerBehaviour that schedules a request to seller agents every minute
-			addBehaviour(new TickerBehaviour(this, 60000)
-			{ 
-				protected void onTick()
-				{
-					// Update the list of seller agents
-					DFAgentDescription template = new DFAgentDescription();
-					ServiceDescription sd = new ServiceDescription();
-					sd.setType("book-selling");
-					template.addServices(sd);
-					try 
-					{
-						DFAgentDescription[] result = DFService.search(myAgent, template);
-						sellerAgents = new AID[result.length];
-						for(int i = 0; i < result.length; ++i)
-							sellerAgents[i] = result[i].getName();
-					}catch (FIPAException fe) {
-						fe.printStackTrace();
-					}
-					// Perform the request
-					myAgent.addBehaviour(new RequestPerformer());       
-				}     
-			} ); 
+			addBehaviour(new CheckSellers(this, 60000)); 
 		}
 
 		else
@@ -61,6 +41,36 @@ public class BookBuyerAgent extends Agent
 
 	protected void takeDown() {
 		System.out.println("Buyer-agent" + getAID().getName() + "teminating");
+	}
+
+	private class CheckSellers extends TickerBehaviour 
+	{
+
+		public CheckSellers(Agent agent, long period) {
+			super(agent, period);
+		}
+
+		@Override
+		protected void onTick() {
+			// Update the list of seller agents
+			DFAgentDescription template = new DFAgentDescription();
+			ServiceDescription sd = new ServiceDescription();
+			sd.setType("book-selling");
+			template.addServices(sd);
+			try 
+			{
+				DFAgentDescription[] result = DFService.search(myAgent, template);
+				sellerAgents = new AID[result.length];
+				for(int i = 0; i < result.length; ++i)
+					sellerAgents[i] = result[i].getName();
+			}catch (FIPAException fe) {
+				fe.printStackTrace();
+			}
+			// Perform the request
+			myAgent.addBehaviour(new RequestPerformer());   
+
+		}
+
 	}
 
 	private class RequestPerformer extends Behaviour
