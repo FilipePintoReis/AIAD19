@@ -1,11 +1,31 @@
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 
+@SuppressWarnings("serial")
 public class Player extends Agent
 {
 	public void setup()
 	{
+		DFAgentDescription dfd = new DFAgentDescription();
+		dfd.setName(getAID());
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType("player");
+		sd.setName("JADE-battle-royale");
+		dfd.addServices(sd);
+		
+		try 
+		{
+			DFService.deregister(this, dfd);
+		} catch (FIPAException fe) 
+		{
+			fe.printStackTrace();
+		}
+		
 		addBehaviour(new PlayerBehaviour());
 	}
 	private class PlayerBehaviour extends CyclicBehaviour

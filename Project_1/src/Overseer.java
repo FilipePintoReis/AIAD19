@@ -1,14 +1,25 @@
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.TickerBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import java.util.HashMap;
 
 
 //TODO register in DF
+@SuppressWarnings("serial")
 public class Overseer extends Agent
 {
-	HashMap<AID, Integer> playerMap;
+	private HashMap<AID, Integer> playerMap;
+
+	//TODO temporary array, convert to map
+	private AID[] players;
+
+
 	public void setup()
 	{
 		playerMap = new HashMap<>();
@@ -57,6 +68,38 @@ public class Overseer extends Agent
 			System.out.println("New Death: " + deceasedPlayer.getLocalName() + "\tTeam: " + teamNumber);
 			System.out.println(playerMap.toString());
 
+		}
+	}
+
+/*
+ * Checks regularly for new players
+ */
+	private class CheckPlayer extends TickerBehaviour 
+	{
+
+		public CheckPlayer(Agent agent, long period)
+		{
+			super(agent, period);
+		}
+
+		@Override
+		protected void onTick() {
+			DFAgentDescription template = new DFAgentDescription();
+			ServiceDescription sd = new ServiceDescription();
+			sd.setType("player");
+			template.addServices(sd);
+
+			try
+			{
+				DFAgentDescription[] result = DFService.search(myAgent, template);
+				players = new AID[result.length];
+				for(int i = 0; i < result.length; i++)
+					players[i] = result[i].getName();
+
+			} catch(FIPAException fe) 
+			{
+				fe.printStackTrace();
+			}
 		}
 	}
 }

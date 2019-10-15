@@ -11,6 +11,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
+@SuppressWarnings("serial")
 public class BookSellerAgent extends Agent {
 	// The catalogue of books for sale (maps the title of a book to its price)
 	private Hashtable<String, Integer> catalogue;
