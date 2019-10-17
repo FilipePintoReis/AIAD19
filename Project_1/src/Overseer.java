@@ -14,6 +14,8 @@ import java.util.HashMap;
 @SuppressWarnings("serial")
 public class Overseer extends Agent
 {
+	public final int NUMBER_OF_TEAMS = 5;
+
 	private HashMap<AID, Integer> playerMap;
 
 	//TODO temporary array, convert to map
@@ -23,7 +25,60 @@ public class Overseer extends Agent
 	public void setup()
 	{
 		playerMap = new HashMap<>();
-		addBehaviour(new CheckPlayer(this, 10000));
+		addBehaviour(new CheckPlayers(this, 10000));
+	}
+
+	/*
+	 * Checks for new players
+	 */
+	private class CheckPlayers extends WakerBehaviour 
+	{
+		public CheckPlayers(Agent a, long timeout) {
+			super(a, timeout);
+		}
+
+		protected void onWake() {
+			DFAgentDescription template = new DFAgentDescription();
+			ServiceDescription sd = new ServiceDescription();
+			sd.setType("player");
+			template.addServices(sd);
+
+			try
+			{
+				DFAgentDescription[] result = DFService.search(myAgent, template);
+				players = new AID[result.length];
+				for(int i = 0; i < result.length; i++)
+					players[i] = result[i].getName();
+
+			} catch(FIPAException fe) 
+			{
+				fe.printStackTrace();
+			}
+
+			for( int i = 0; i < players.length; i++)
+			{
+				System.out.println(players[i].getLocalName());
+			}
+
+			informPlayerTeams();
+		}
+
+		
+		
+		private void informPlayerTeams() {
+			int playerIndex = 0;			
+			for(Integer i = 0; i < NUMBER_OF_TEAMS; i++)
+			{
+				ACLMessage informTeam = new ACLMessage(ACLMessage.INFORM);
+				for(int j = 0; j < players.length / NUMBER_OF_TEAMS; j++)
+				{
+					informTeam.addReceiver(players[playerIndex++]);
+				}
+				informTeam.setContent(i.toString());
+				informTeam.setConversationId("team-number");
+				send(informTeam);
+			}
+		}
 	}
 
 	private class OverseerBehaviour extends CyclicBehaviour
@@ -71,37 +126,5 @@ public class Overseer extends Agent
 		}
 	}
 
-	/*
-	 * Checks for new players
-	 */
-	private class CheckPlayer extends WakerBehaviour 
-	{
-		public CheckPlayer(Agent a, long timeout) {
-			super(a, timeout);
-		}
 
-		protected void onWake() {
-			DFAgentDescription template = new DFAgentDescription();
-			ServiceDescription sd = new ServiceDescription();
-			sd.setType("player");
-			template.addServices(sd);
-
-			try
-			{
-				DFAgentDescription[] result = DFService.search(myAgent, template);
-				players = new AID[result.length];
-				for(int i = 0; i < result.length; i++)
-					players[i] = result[i].getName();
-
-			} catch(FIPAException fe) 
-			{
-				fe.printStackTrace();
-			}
-
-			for( int i = 0; i < players.length; i++)
-			{
-				System.out.println(players[i].getLocalName());
-			}
-		}
-	}
 }

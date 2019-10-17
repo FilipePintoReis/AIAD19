@@ -1,5 +1,6 @@
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.SimpleBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -9,6 +10,8 @@ import jade.lang.acl.ACLMessage;
 @SuppressWarnings("serial")
 public class Player extends Agent
 {
+	private int teamNumber;
+
 	public void setup()
 	{
 		DFAgentDescription dfd = new DFAgentDescription();
@@ -17,7 +20,7 @@ public class Player extends Agent
 		sd.setType("player");
 		sd.setName("JADE-battle-royale");
 		dfd.addServices(sd);
-		
+
 		try 
 		{
 			DFService.register(this, dfd);
@@ -25,9 +28,30 @@ public class Player extends Agent
 		{
 			fe.printStackTrace();
 		}
-		
-		addBehaviour(new PlayerBehaviour());
+
+		addBehaviour(new TeamListener());
 	}
+
+	private class TeamListener extends SimpleBehaviour
+	{
+
+		@Override
+		public void action() {
+			ACLMessage msg = receive();
+			if(msg != null)
+			{
+				String msgContent = msg.getContent();
+				
+			}
+		}
+
+		@Override
+		public boolean done() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+	}
+
 	private class PlayerBehaviour extends CyclicBehaviour
 	{
 		private int msgSent = 0;
