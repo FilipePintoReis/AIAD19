@@ -1,7 +1,7 @@
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.TickerBehaviour;
+import jade.core.behaviours.WakerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -23,7 +23,7 @@ public class Overseer extends Agent
 	public void setup()
 	{
 		playerMap = new HashMap<>();
-		addBehaviour(new OverseerBehaviour());
+		addBehaviour(new CheckPlayer(this, 10000));
 	}
 
 	private class OverseerBehaviour extends CyclicBehaviour
@@ -71,19 +71,16 @@ public class Overseer extends Agent
 		}
 	}
 
-/*
- * Checks regularly for new players
- */
-	private class CheckPlayer extends TickerBehaviour 
+	/*
+	 * Checks for new players
+	 */
+	private class CheckPlayer extends WakerBehaviour 
 	{
-
-		public CheckPlayer(Agent agent, long period)
-		{
-			super(agent, period);
+		public CheckPlayer(Agent a, long timeout) {
+			super(a, timeout);
 		}
 
-		@Override
-		protected void onTick() {
+		protected void onWake() {
 			DFAgentDescription template = new DFAgentDescription();
 			ServiceDescription sd = new ServiceDescription();
 			sd.setType("player");
@@ -99,6 +96,11 @@ public class Overseer extends Agent
 			} catch(FIPAException fe) 
 			{
 				fe.printStackTrace();
+			}
+
+			for( int i = 0; i < players.length; i++)
+			{
+				System.out.println(players[i].getLocalName());
 			}
 		}
 	}

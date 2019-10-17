@@ -20,7 +20,7 @@ public class Player extends Agent
 		
 		try 
 		{
-			DFService.deregister(this, dfd);
+			DFService.register(this, dfd);
 		} catch (FIPAException fe) 
 		{
 			fe.printStackTrace();
