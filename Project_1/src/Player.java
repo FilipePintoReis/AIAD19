@@ -11,7 +11,7 @@ import jade.lang.acl.MessageTemplate;
 @SuppressWarnings("serial")
 public class Player extends Agent
 {
-	private int teamNumber;
+	private int teamNumber = -1;
 
 	public void setup()
 	{
@@ -31,6 +31,7 @@ public class Player extends Agent
 		}
 
 		addBehaviour(new TeamListener());
+		addBehaviour(new PlayGame());
 	}
 
 	private class TeamListener extends CyclicBehaviour
@@ -42,41 +43,32 @@ public class Player extends Agent
 			ACLMessage msg = receive(mt);
 			if(msg != null)
 			{
-				Integer msgContent = Integer.parseInt(msg.getContent());
-				System.out.println(myAgent.getLocalName() + " : " + msgContent);
+				teamNumber = Integer.parseInt(msg.getContent());
 			}
 			else block();
 		}
 	}
 
-	private class PlayerBehaviour extends CyclicBehaviour
+	private class PlayGame extends CyclicBehaviour
 	{
-		private int msgSent = 0;
 
 		@Override
 		public void action() {
-			switch(msgSent)
-			{
-			case 0:
-			{
-				ACLMessage msgBirth = MessageHandler.getBirthMessage();
-				send(msgBirth);
-				System.out.println("Message sent: " + msgBirth.getContent());
-				msgSent++;
-				block(4000);
-				break;
-			}
-			case 1:
-			{
-				ACLMessage msgDeath = MessageHandler.getDeathMessage();
-				send(msgDeath);
-				System.out.println("Message sent: " + msgDeath.getContent());
-				block(4000);
-				msgSent++;
-				break;
-			}
-			default: block();
-			}
+			// TODO Auto-generated method stub
+
 		}
+	}
+
+	protected void takeDown() {
+		// Deregister from the yellow pages
+		try
+		{
+			DFService.deregister(this);
+		}
+		catch (FIPAException fe)
+		{
+			fe.printStackTrace();
+		}
+		System.out.println("Player-agent" + getAID().getLocalName() + "terminating.");
 	}
 }
