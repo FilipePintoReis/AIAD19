@@ -1,7 +1,5 @@
 import java.util.Hashtable;
-
 import jade.core.Agent;
-import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
@@ -47,7 +45,7 @@ public class BookSellerAgent extends Agent {
 		@Override
 		public void action() {
 			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.CFP); 
-			ACLMessage msg = myAgent.receive();
+			ACLMessage msg = myAgent.receive(mt);
 			if(msg!=null)
 			{
 				// CFP Message received. Process it
