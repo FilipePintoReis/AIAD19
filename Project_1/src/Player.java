@@ -6,6 +6,7 @@ import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 
 @SuppressWarnings("serial")
 public class Player extends Agent
@@ -32,23 +33,19 @@ public class Player extends Agent
 		addBehaviour(new TeamListener());
 	}
 
-	private class TeamListener extends SimpleBehaviour
+	private class TeamListener extends CyclicBehaviour
 	{
 
 		@Override
 		public void action() {
-			ACLMessage msg = receive();
+			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
+			ACLMessage msg = receive(mt);
 			if(msg != null)
 			{
-				String msgContent = msg.getContent();
-				
+				Integer msgContent = Integer.parseInt(msg.getContent());
+				System.out.println(myAgent.getLocalName() + " : " + msgContent);
 			}
-		}
-
-		@Override
-		public boolean done() {
-			// TODO Auto-generated method stub
-			return false;
+			else block();
 		}
 	}
 

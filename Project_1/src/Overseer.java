@@ -77,6 +77,7 @@ public class Overseer extends Agent
 				informTeam.setContent(i.toString());
 				informTeam.setConversationId("team-number");
 				send(informTeam);
+				System.out.println("Sent team " + i);
 			}
 		}
 	}
