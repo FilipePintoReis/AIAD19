@@ -1,5 +1,9 @@
+import java.io.Serializable;
+import java.util.HashMap;
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
@@ -7,11 +11,13 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.lang.acl.UnreadableException;
 
-@SuppressWarnings("serial")
 public class Player extends Agent
 {
-	private int teamNumber = -1;
+	private int teamNumber;
+
+	private HashMap<AID, Integer> playerMap = new HashMap<AID, Integer>();
 
 	public void setup()
 	{
@@ -30,22 +36,149 @@ public class Player extends Agent
 			fe.printStackTrace();
 		}
 
-		addBehaviour(new TeamListener());
-		addBehaviour(new PlayGame());
+		System.out.println(getLocalName());
+
+		addBehaviour(new DuelPlayer());
+		addBehaviour(new ListenForDuels());
+
+		//		SequentialBehaviour playerBehaviour = new SequentialBehaviour(this);
+		//		playerBehaviour.addSubBehaviour(new TeamListener());
+		//
+		//
+		//
+		//
+		//		addBehaviour(playerBehaviour);
+	}
+
+	private class DuelPlayer extends SimpleBehaviour 
+	{
+		private int done = 0;
+		@Override
+		public void action() {
+			if(myAgent.getLocalName().equals("player1"))
+			{
+				ACLMessage msg = new ACLMessage(ACLMessage.PROPOSE);
+				switch(done)
+				{
+				case 0:
+					System.out.println(myAgent.getLocalName() + " got in duel");
+					System.out.println("Sent message");
+					msg = new ACLMessage(ACLMessage.PROPOSE);
+					msg.setContent("1");
+					msg.setConversationId("duel");
+					msg.addReceiver(new AID("player2", AID.ISLOCALNAME));
+					send(msg);
+					System.out.println("Sent message2");
+					done = 1;
+					break;
+				case 1:
+					MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.PROPOSE);
+					msg = receive(mt);
+					if(msg != null)
+					{
+						if(msg.getPerformative() == ACLMessage.ACCEPT_PROPOSAL)
+						{
+							Integer duelTeam = Integer.parseInt(msg.getContent());
+							int result = checkWinner(1, duelTeam);
+						}
+							
+					}
+				}
+			}
+			else 
+			{
+				done = 3;
+			}
+		}
+
+		private int checkWinner(int myTeam, int oppTeam)
+		{
+			if(myTeam + 1 == oppTeam) {
+				return 1;
+			}
+			else if(myTeam == oppTeam + 1) {
+				return -1;
+			}
+			else if(myTeam == oppTeam)
+				return 0;
+			else return 2;
+		}
+		
+		@Override
+		public boolean done() {
+
+			return done == 3;
+		}
+
+	}
+
+	private class ListenForDuels extends SimpleBehaviour
+	{
+		private boolean done = false;
+		@Override
+		public void action() {
+			if(myAgent.getLocalName().equals("player2")) {
+				System.out.println(myAgent.getLocalName() + " got in lsten");
+				MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.PROPOSE);
+				ACLMessage msg = receive(mt);
+				if(msg != null)
+				{
+					System.out.println("Received duel from " + msg.getSender().getLocalName() + " of team " + msg.getContent());
+					ACLMessage reply = msg.createReply();
+					reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+					send(reply);
+				}
+				else block();
+			}
+			else done = true;
+		}
+
+		@Override
+		public boolean done() {
+			return done;
+		}
 	}
 
 	private class TeamListener extends CyclicBehaviour
 	{
 
 		@Override
-		public void action() {
+		public void action() {		
 			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
 			ACLMessage msg = receive(mt);
 			if(msg != null)
 			{
-				teamNumber = Integer.parseInt(msg.getContent());
+				switch(msg.getConversationId()) {
+				case "team-number":
+					teamNumber = Integer.parseInt(msg.getContent());
+					System.out.println(myAgent.getLocalName() + " " + teamNumber);
+					break;
+				case "player-list":
+					try {
+						turnPlayerArrayIntoMap(msg.getContentObject(), playerMap);
+						playerMap.put(myAgent.getAID(), teamNumber);
+					} catch (UnreadableException e) {					
+						e.printStackTrace();
+						System.err.println("Couldn't retrieve player List from message.");
+					}
+					System.out.println(playerMap.toString());
+					break;
+
+				case "duel-challenge":
+				{
+
+				}
+				}
 			}
 			else block();
+		}
+
+		private void turnPlayerArrayIntoMap(Serializable playerArray, HashMap<AID, Integer> playerMap) {
+			AID[] array = (AID[]) playerArray;
+			for(int i = 0; i < array.length; i++)
+			{
+				playerMap.put(array[i], -1);
+			}
 		}
 	}
 
@@ -54,7 +187,7 @@ public class Player extends Agent
 
 		@Override
 		public void action() {
-			// TODO Auto-generated method stub
+
 
 		}
 	}

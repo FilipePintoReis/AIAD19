@@ -7,11 +7,11 @@ import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
+
+import java.io.IOException;
 import java.util.HashMap;
 
-
-//TODO register in DF
-@SuppressWarnings("serial")
 public class Overseer extends Agent
 {
 	public final int NUMBER_OF_TEAMS = 5;
@@ -21,11 +21,10 @@ public class Overseer extends Agent
 	//TODO temporary array, convert to map
 	private AID[] players;
 
-
 	public void setup()
 	{
 		playerMap = new HashMap<>();
-		addBehaviour(new CheckPlayers(this, 10000));
+		addBehaviour(new CheckPlayers(this, 5000));
 	}
 
 	/*
@@ -54,31 +53,43 @@ public class Overseer extends Agent
 			{
 				fe.printStackTrace();
 			}
-
-			for( int i = 0; i < players.length; i++)
-			{
-				System.out.println(players[i].getLocalName());
-			}
-
 			informPlayerTeams();
 		}
 
-		
-		
+
+
 		private void informPlayerTeams() {
-			int playerIndex = 0;			
+			int playerIndex = 0;
+
+			//Send each player their team Number
 			for(Integer i = 0; i < NUMBER_OF_TEAMS; i++)
 			{
 				ACLMessage informTeam = new ACLMessage(ACLMessage.INFORM);
 				for(int j = 0; j < players.length / NUMBER_OF_TEAMS; j++)
 				{
 					informTeam.addReceiver(players[playerIndex++]);
+					playerMap.put(players[playerIndex], i);
+					
+
 				}
 				informTeam.setContent(i.toString());
 				informTeam.setConversationId("team-number");
 				send(informTeam);
-				System.out.println("Sent team " + i);
 			}
+
+			//Send each player a copy of all available players, without knowing the teams
+			ACLMessage playersListMsg = new ACLMessage(ACLMessage.INFORM);
+			for(int i = 0; i < players.length; i++)
+			{
+				playersListMsg.addReceiver(players[i]);
+			}
+			try {
+				playersListMsg.setContentObject(players);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			playersListMsg.setConversationId("player-list");
+			send(playersListMsg);
 		}
 	}
 
