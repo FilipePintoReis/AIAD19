@@ -1,0 +1,82 @@
+Player
+
+mudar hashmap para key-estrutura em que estrutura tem equipa e estado (2-morto)
+
+juntar id do grupo
+
+se desafiar alguem que ja tenha sido desafiado, tomar outra vez decisao
+
+primeiro cada player faz as suas acçoes, so no final é que sao informados de quem morreu
+
+behaviour para informar overseer que morreste
+
+delay aleatorio para tomar decisao (perguntar a marcia se nao entender)
+
+decidir se negociaçao caso raças neutras
+
+equipa caso raça igual
+
+se equipa, guardar id do lider
+
+
+
+
+Negociaçao
+
+o primeiro a mandar informaçao é quem propos negociaçao
+
+cada um manda id de um player do qual vai mandar informaçao: caso ambos concordem, trocam informaçao
+                                                             caso alguem nao concorde, tentam outros id's ate 3 vezes
+
+
+
+
+Team
+
+
+decide-se lider aleatorio
+
+lider tem que ter estrutura de dados relativa aos membros da equipa
+
+no final de cada ronda, mandas informaçao nova ao lider, e ele informa a equipa toda da nova informaçao
+
+o lider toma decisoes por todo o grupo so relativamente a se vais duelar ou nao e contra quem
+
+se o lider morre, o lider vai enviar uma mensagem a um player a dizer que ele é o novo lider e este novo lider recebe:
+a) lista de membros da equipa 
+b) lista de informações sobre todos players
+
+
+//fazer so no fim
+Dois gajos da mesma raça encontram-se, cada um informa o seu líder que querem mergir. agente externo para merge
+
+Agente externo recebe todos os pedidos de merge, faz merge e depois informa os grupos
+
+
+
+
+
+Personalidade enquanto sozinho: atacar ou nao e escolher quem atacar
+
+Personalidade individual: negociar ou nao
+
+Personalidade lider: escolher quem ataca quem e quem lhe sucede caso assassinato
+
+Existem 3 major behaviours:
+	Hunter : ataca mais em geral, principalmente unknown
+	Negotiator: tende a atacar neutros ao seu grupo
+	Pacato: nao ataca unknowns, ataca gente neutra
+
+
+Overseer 
+
+overseer envia a todos os players que ronda começou/terminou
+
+checkar que nao existem equipas adjacentes, se se verificar jogo acabou
+
+overseer informa os resultados
+
+
+
+
+
