@@ -15,9 +15,11 @@ import jade.lang.acl.UnreadableException;
 
 public class Player extends Agent
 {
+	private static final int ALIVE = 0;
+	private static final int DEAD = 1;
 	private int teamNumber;
 
-	private HashMap<AID, Integer> playerMap = new HashMap<AID, Integer>();
+	private HashMap<AID, PlayerStruct> playerMap = new HashMap<AID, PlayerStruct>();
 
 	public void setup()
 	{
@@ -156,7 +158,7 @@ public class Player extends Agent
 				case "player-list":
 					try {
 						turnPlayerArrayIntoMap(msg.getContentObject(), playerMap);
-						playerMap.put(myAgent.getAID(), teamNumber);
+						playerMap.put(myAgent.getAID(), new PlayerStruct(teamNumber, ALIVE));
 					} catch (UnreadableException e) {					
 						e.printStackTrace();
 						System.err.println("Couldn't retrieve player List from message.");
@@ -173,11 +175,11 @@ public class Player extends Agent
 			else block();
 		}
 
-		private void turnPlayerArrayIntoMap(Serializable playerArray, HashMap<AID, Integer> playerMap) {
+		private void turnPlayerArrayIntoMap(Serializable playerArray, HashMap<AID, PlayerStruct> playerMap) {
 			AID[] array = (AID[]) playerArray;
 			for(int i = 0; i < array.length; i++)
 			{
-				playerMap.put(array[i], -1);
+				playerMap.put(array[i], new PlayerStruct(-1, ALIVE));
 			}
 		}
 	}

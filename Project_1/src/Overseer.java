@@ -14,6 +14,9 @@ import java.util.HashMap;
 
 public class Overseer extends Agent
 {
+	private static final int ALIVE = 0;
+	private static final int DEAD = 1;
+	
 	public final int NUMBER_OF_TEAMS = 5;
 
 	private HashMap<AID, Integer> playerMap;
