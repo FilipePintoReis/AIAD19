@@ -19,7 +19,7 @@ public class Overseer extends Agent
 	
 	public final int NUMBER_OF_TEAMS = 5;
 
-	private HashMap<AID, Integer> playerMap;
+	private HashMap<AID, PlayerStruct> playerMap;
 
 	//TODO temporary array, convert to map
 	private AID[] players;
@@ -71,7 +71,7 @@ public class Overseer extends Agent
 				for(int j = 0; j < players.length / NUMBER_OF_TEAMS; j++)
 				{
 					informTeam.addReceiver(players[playerIndex++]);
-					playerMap.put(players[playerIndex], i);
+					playerMap.put(players[playerIndex], new PlayerStruct(i, ALIVE));
 					
 
 				}
@@ -125,17 +125,17 @@ public class Overseer extends Agent
 		private void announceBirth(AID newbornPlayer, Integer teamNumber)
 		{
 			// TODO Send messages to all existing agents about new birth
-			playerMap.put(newbornPlayer, teamNumber);
+			playerMap.put(newbornPlayer, new PlayerStruct(teamNumber, ALIVE));
 			System.out.println("New Birth: " + newbornPlayer.getLocalName() + "\tTeam: " + teamNumber);
 			System.out.println(playerMap.toString());
 		}
 
 		private void announceDeath(AID deceasedPlayer)
 		{
-			Integer teamNumber = playerMap.get(deceasedPlayer);
+			PlayerStruct deceasedStruct = playerMap.get(deceasedPlayer);
 			playerMap.remove(deceasedPlayer);
 			//TODO Send message to all alive agents about new death
-			System.out.println("New Death: " + deceasedPlayer.getLocalName() + "\tTeam: " + teamNumber);
+			System.out.println("New Death: " + deceasedPlayer.getLocalName() + "\tTeam: " + deceasedStruct.team);
 			System.out.println(playerMap.toString());
 
 		}

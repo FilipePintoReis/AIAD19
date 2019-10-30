@@ -18,6 +18,7 @@ public class Player extends Agent
 	private static final int ALIVE = 0;
 	private static final int DEAD = 1;
 	private int teamNumber;
+	private int groupNumber = -1;
 
 	private HashMap<AID, PlayerStruct> playerMap = new HashMap<AID, PlayerStruct>();
 
@@ -141,6 +142,23 @@ public class Player extends Agent
 		}
 	}
 
+	private class DeathNote extends SimpleBehaviour{
+
+		@Override
+		public void action() {
+			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+			msg.setContent(getAID().toString());
+			msg.setConversationId("dead");
+			msg.addReceiver(new AID("Overseer", AID.ISLOCALNAME));
+		}
+
+		@Override
+		public boolean done() {
+			return false;
+		}
+		
+	}
+	
 	private class TeamListener extends CyclicBehaviour
 	{
 
