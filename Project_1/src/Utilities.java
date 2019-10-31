@@ -16,4 +16,42 @@ public class Utilities {
 				return false;
 		}
 	}
+	
+	public static boolean diesHorribly(Integer teamNumber, Integer comparisonN) {
+		switch(teamNumber) {
+		case 1:
+			return comparisonN == 5;
+		case 2:
+			return comparisonN == 1;
+		case 3:
+			return comparisonN == 2;
+		case 4:
+			return comparisonN == 3;
+		case 5:
+			return comparisonN == 4;
+		default:
+			return false;
+		}
+	}
+	
+	public static boolean killsTheEnemy(Integer teamNumber, Integer comparisonN) {
+		switch(teamNumber) {
+		case 1:
+			return comparisonN == 5;
+		case 2:
+			return comparisonN == 1;
+		case 3:
+			return comparisonN == 2;
+		case 4:
+			return comparisonN == 3;
+		case 5:
+			return comparisonN == 4;
+		default:
+			return false;
+		}
+	}
+	
+	public static boolean isFromMyTeam(Integer teamNumber, Integer comparisonN) {
+		return teamNumber == comparisonN;
+	}
 }

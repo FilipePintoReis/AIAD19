@@ -1,5 +1,7 @@
+import jade.core.AID;
 
 public class PlayerStruct {
+	public AID myAID;
 	public Integer team;
 	public Integer state; // 0 alive 1 is dead
 	public Integer group;
