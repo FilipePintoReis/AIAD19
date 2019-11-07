@@ -13,12 +13,18 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 import main.Utilities.*;
+import personality.Hunter;
+import personality.Negotiator;
+import personality.Passive;
+import personality.Personality;
 
 @SuppressWarnings("serial")
 public class Player extends Agent
 {
 	private int teamNumber;
 	private int groupNumber = -1;
+	
+	private Personality personality;
 
 	private HashMap<AID, PlayerStruct> playerMap = new HashMap<AID, PlayerStruct>();
 
@@ -26,10 +32,13 @@ public class Player extends Agent
 	{
 		registerOnDFD();
 		System.out.println(getLocalName());
+		parseArguments();
 
 		addBehaviour(new DuelPlayer());
 		addBehaviour(new ListenForDuels());
 
+		
+		
 		//		SequentialBehaviour playerBehaviour = new SequentialBehaviour(this);
 		//		playerBehaviour.addSubBehaviour(new TeamListener());
 		//
@@ -37,6 +46,18 @@ public class Player extends Agent
 		//
 		//
 		//		addBehaviour(playerBehaviour);
+	}
+	
+	private void parseArguments()
+	{
+		Object[] args = getArguments();
+		Integer personalityValue = Integer.parseInt(args[0].toString());
+		switch(personalityValue)
+		{
+		case 1: personality = new Hunter(); break;
+		case 2: personality = new Negotiator(); break;
+		default: personality = new Passive();
+		}
 	}
 
 	private void registerOnDFD() {
@@ -55,7 +76,7 @@ public class Player extends Agent
 			fe.printStackTrace();
 		}
 	}
-	
+
 	private class DuelPlayer extends SimpleBehaviour 
 	{
 		private int done = 0;
@@ -71,7 +92,7 @@ public class Player extends Agent
 					System.out.println(myAgent.getLocalName() + " got in duel");
 					System.out.println("Sent message");
 					msg = new ACLMessage(ACLMessage.PROPOSE);
-					msg.setContent("1");
+					msg.setContent("2");
 					msg.setConversationId("duel");
 					msg.addReceiver(new AID("player2", AID.ISLOCALNAME));
 					send(msg);
@@ -79,18 +100,13 @@ public class Player extends Agent
 					done = 1;
 					break;
 				case 1:
-					MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.PROPOSE);
+					MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
 					msg = receive(mt);
 					if(msg != null)
 					{
-						if(msg.getPerformative() == ACLMessage.ACCEPT_PROPOSAL)
-						{
-							Integer duelTeam = Integer.parseInt(msg.getContent());
-							Outcome outcome = Utilities.getOutcome(1, duelTeam);
-							replyOutcome(msg, outcome);
-							handleOutcome(outcome);
-							
-						}
+						Outcome outcome = Utilities.adjustOutcome(Outcome.valueOf(msg.getContent()));
+						handleOutcome(outcome);
+						done = 3;
 					}
 				}
 			}
@@ -100,60 +116,7 @@ public class Player extends Agent
 			}
 		}
 
-		public void replyOutcome(ACLMessage msg, Outcome outcome) {
-			ACLMessage reply = msg.createReply();
-			reply.setPerformative(ACLMessage.INFORM);
-			reply.setContent(outcome.toString());
-		}
-		
-		private void handleOutcome(Outcome result)
-		{
-			//TODO
-			switch(result)
-			{
-			case VICTORY:
-			{
-				
-				handleVictory();
-				break;
-			}
-			case LOSS:
-			{
-				handleLoss();
-				break;
-			}
-			case SAME_TEAM:
-			{
-				handleSameTeam();
-				break;
-			}
-			case NEUTRAL:
-			{
-				handleNeutral();
-				break;
-			}
-			}
-		}
-		
-		private void handleVictory()
-		{
-		//TODO	
-		}
-		
-		private void handleLoss()
-		{
-		//TODO	
-		}
-		
-		private void handleSameTeam()
-		{
-		//TODO	
-		}
-		
-		private void handleNeutral()
-		{
-		//TODO	
-		}
+
 
 		@Override
 		public boolean done() {
@@ -172,11 +135,13 @@ public class Player extends Agent
 				MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.PROPOSE);
 				ACLMessage msg = receive(mt);
 				if(msg != null)
-				{
-					System.out.println("Received duel from " + msg.getSender().getLocalName() + " of team " + msg.getContent());
-					ACLMessage reply = msg.createReply();
-					reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-					send(reply);
+				{	
+					System.out.println("OWO");
+					Integer duelTeam = Integer.parseInt(msg.getContent());
+					teamNumber = 1; //TODO remove
+					Outcome outcome = Utilities.getOutcome(teamNumber, duelTeam);
+					replyOutcome(msg, outcome);
+					handleOutcome(outcome);
 				}
 				else block();
 			}
@@ -186,6 +151,13 @@ public class Player extends Agent
 		@Override
 		public boolean done() {
 			return done;
+		}
+
+		private void replyOutcome(ACLMessage msg, Outcome outcome) {
+			ACLMessage reply = msg.createReply();
+			reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+			reply.setContent(outcome.toString());
+			send(reply);
 		}
 	}
 
@@ -203,9 +175,9 @@ public class Player extends Agent
 		public boolean done() {
 			return false;
 		}
-		
+
 	}
-	
+
 	private class TeamListener extends CyclicBehaviour
 	{
 
@@ -248,7 +220,55 @@ public class Player extends Agent
 			}
 		}
 	}
-	
+
+	private void handleOutcome(Outcome result)
+	{
+		//TODO
+		switch(result)
+		{
+		case VICTORY:
+		{
+			handleVictory();
+			break;
+		}
+		case LOSS:
+		{
+			handleLoss();
+			break;
+		}
+		case SAME_TEAM:
+		{
+			handleSameTeam();
+			break;
+		}
+		case NEUTRAL:
+		{
+			handleNeutral();
+			break;
+		}
+		}
+	}
+
+	private void handleVictory()
+	{
+		//TODO	
+	}
+
+	private void handleLoss()
+	{
+		//TODO	
+	}
+
+	private void handleSameTeam()
+	{
+		//TODO	
+	}
+
+	private void handleNeutral()
+	{
+		//TODO	
+	}
+
 	protected void takeDown() {
 		// Deregister from the yellow pages
 		try
