@@ -36,7 +36,7 @@ public class Hunter implements Personality {
 			if(Utilities.killsTheEnemy(ownStruct.getTeam(), value.getTeam())) {
 				killsMeTeam.get(0).add(key);
 			}
-			if(Utilities.isOnMyTeam(ownStruct.getTeam(), value.getTeam())) {
+			if(Utilities.isOnSameTeam(ownStruct.getTeam(), value.getTeam())) {
 				myTeam.get(0).add(key);
 			}
 		});

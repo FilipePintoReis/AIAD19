@@ -38,7 +38,7 @@ public class Passive implements Personality {
 			if(Utilities.killsTheEnemy(ownStruct.getTeam(), value.getTeam())) {
 				killsMeTeam.get(0).add(key);
 			}
-			if(Utilities.isOnMyTeam(ownStruct.getTeam(), value.getTeam()) && ownStruct.getGroup() != value.getGroup()) {
+			if(Utilities.isOnSameTeam(ownStruct.getTeam(), value.getTeam()) && ownStruct.getGroup() != value.getGroup()) {
 				myTeam.get(0).add(key);
 			}
 		});
