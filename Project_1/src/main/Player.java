@@ -4,6 +4,7 @@ import java.util.HashMap;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
@@ -23,7 +24,7 @@ public class Player extends Agent
 {
 	private int teamNumber;
 	private int groupNumber = -1;
-	
+
 	private Personality personality;
 
 	private HashMap<AID, PlayerStruct> playerMap = new HashMap<AID, PlayerStruct>();
@@ -32,22 +33,22 @@ public class Player extends Agent
 	{
 		registerOnDFD();
 		System.out.println(getLocalName());
-		parseArguments();
+		// TODO parseArguments();
 
-		addBehaviour(new DuelPlayer());
-		addBehaviour(new ListenForDuels());
+		//addBehaviour(new DuelPlayer());
+		//addBehaviour(new ListenForDuels());
 
-		
-		
-		//		SequentialBehaviour playerBehaviour = new SequentialBehaviour(this);
-		//		playerBehaviour.addSubBehaviour(new TeamListener());
-		//
-		//
-		//
-		//
-		//		addBehaviour(playerBehaviour);
+
+
+		SequentialBehaviour playerBehaviour = new SequentialBehaviour(this);
+		playerBehaviour.addSubBehaviour(new TeamListener());
+
+
+
+
+		addBehaviour(playerBehaviour);
 	}
-	
+
 	private void parseArguments()
 	{
 		Object[] args = getArguments();
@@ -178,9 +179,10 @@ public class Player extends Agent
 
 	}
 
-	private class TeamListener extends CyclicBehaviour
+	private class TeamListener extends SimpleBehaviour
 	{
-
+		private boolean hasTeam = false;
+		private boolean hasPlayerList = false;
 		@Override
 		public void action() {		
 			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
@@ -189,24 +191,25 @@ public class Player extends Agent
 			{
 				switch(msg.getConversationId()) {
 				case "team-number":
-					teamNumber = Integer.parseInt(msg.getContent());
-					System.out.println(myAgent.getLocalName() + " " + teamNumber);
+					if(!hasTeam) {
+						teamNumber = Integer.parseInt(msg.getContent());
+						System.out.println(myAgent.getLocalName() + " " + teamNumber);
+						hasTeam = true;
+					}
 					break;
 				case "player-list":
-					try {
-						turnPlayerArrayIntoMap(msg.getContentObject(), playerMap);
-						playerMap.put(myAgent.getAID(), new PlayerStruct(teamNumber));
-					} catch (UnreadableException e) {					
-						e.printStackTrace();
-						System.err.println("Couldn't retrieve player List from message.");
+					if(!hasPlayerList) {
+						try {
+							turnPlayerArrayIntoMap(msg.getContentObject(), playerMap);
+						} catch (UnreadableException e) {					
+							e.printStackTrace();
+							System.err.println("Couldn't retrieve player List from message.");
+						}
+						hasPlayerList = true;
+						System.out.println(playerMap.toString());
+						System.out.println("I have the List");
 					}
-					System.out.println(playerMap.toString());
 					break;
-
-				case "duel-challenge":
-				{
-
-				}
 				}
 			}
 			else block();
@@ -218,6 +221,12 @@ public class Player extends Agent
 			{
 				playerMap.put(array[i], new PlayerStruct(-1));
 			}
+			playerMap.put(myAgent.getAID(), new PlayerStruct(teamNumber));
+		}
+
+		@Override
+		public boolean done() {
+			return hasTeam && hasPlayerList;
 		}
 	}
 
