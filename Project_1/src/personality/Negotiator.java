@@ -2,11 +2,9 @@ package personality;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import jade.core.AID;
 import main.PlayerStruct;
 import main.Utilities;
-import main.PlayerStruct.State;
 
 public class Negotiator implements Personality {
 	private static final int UNKNOWN = -1;

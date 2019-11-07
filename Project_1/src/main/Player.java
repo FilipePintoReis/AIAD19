@@ -1,7 +1,6 @@
 package main;
 import java.io.Serializable;
 import java.util.HashMap;
-
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;

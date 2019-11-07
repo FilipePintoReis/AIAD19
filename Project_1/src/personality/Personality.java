@@ -1,7 +1,6 @@
 package personality;
 
 import java.util.HashMap;
-
 import jade.core.AID;
 import main.PlayerStruct;
 

@@ -3,7 +3,6 @@ package personality;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
-
 import jade.core.AID;
 import main.PlayerStruct;
 import main.Utilities;
