@@ -5,6 +5,7 @@ import java.util.HashMap;
 import jade.core.AID;
 import main.PlayerStruct;
 import main.Utilities;
+import main.Utilities.Outcome;
 
 public class Negotiator implements Personality {
 	private static final int UNKNOWN = -1;
@@ -20,7 +21,8 @@ public class Negotiator implements Personality {
 			}
 			if(value.getTeam() != UNKNOWN ) {
 				knownPlayers[0]++;
-				if(value.getTeam() == ownStruct.getTeam() || Utilities.isNeutral(ownStruct.getTeam(), value.getTeam())) {
+				Outcome outcome = Utilities.getOutcome(ownStruct.getTeam(), value.getTeam());
+				if(outcome == Outcome.SAME_TEAM || outcome == Outcome.NEUTRAL) {
 					neutralPlayers[0]++;
 				}
 			}
@@ -35,21 +37,34 @@ public class Negotiator implements Personality {
 		ArrayList<ArrayList<AID>> iKillTeam = new ArrayList<ArrayList<AID>>(); 
 		ArrayList<ArrayList<AID>> killsMeTeam = new ArrayList<ArrayList<AID>>(); 
 		ArrayList<ArrayList<AID>> idkTeam = new ArrayList<ArrayList<AID>>();
-		playerMap.forEach((key, value)->{
+		playerMap.forEach((key, value)->{			
 			if(value.getTeam() == UNKNOWN ) {
 					idkTeam.get(0).add(key);
 			}
-			if(Utilities.isNeutral(ownStruct.getTeam(), value.getTeam())) {
-				neutralTeam.get(0).add(key);
-			}
-			if(Utilities.diesHorribly(ownStruct.getTeam(), value.getTeam())) {
-				iKillTeam.get(0).add(key);
-			}
-			if(Utilities.killsTheEnemy(ownStruct.getTeam(), value.getTeam())) {
-				killsMeTeam.get(0).add(key);
-			}
-			if(Utilities.isOnSameTeam(ownStruct.getTeam(), value.getTeam())) {
-				myTeam.get(0).add(key);
+			else {
+				switch(Utilities.getOutcome(ownStruct.getTeam(), value.getTeam()))
+				{
+				case VICTORY:
+				{
+					iKillTeam.get(0).add(key);
+					break;
+				}
+				case LOSS:
+				{
+					killsMeTeam.get(0).add(key);
+					break;
+				}
+				case SAME_TEAM:
+				{
+					myTeam.get(0).add(key);
+					break;
+				}
+				case NEUTRAL:
+				{
+					neutralTeam.get(0).add(key);
+					break;
+				}
+				}
 			}
 		});
 		
