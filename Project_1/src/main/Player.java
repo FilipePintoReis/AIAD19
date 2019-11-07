@@ -12,6 +12,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
+import main.Utilities.*;
 
 @SuppressWarnings("serial")
 public class Player extends Agent
@@ -66,6 +67,7 @@ public class Player extends Agent
 				switch(done)
 				{
 				case 0:
+					System.out.println(Outcome.VICTORY.toString());
 					System.out.println(myAgent.getLocalName() + " got in duel");
 					System.out.println("Sent message");
 					msg = new ACLMessage(ACLMessage.PROPOSE);
@@ -84,7 +86,10 @@ public class Player extends Agent
 						if(msg.getPerformative() == ACLMessage.ACCEPT_PROPOSAL)
 						{
 							Integer duelTeam = Integer.parseInt(msg.getContent());
-							int result = checkWinner(1, duelTeam);
+							Outcome outcome = Utilities.getOutcome(1, duelTeam);
+							replyOutcome(msg, outcome);
+							handleOutcome(outcome);
+							
 						}
 					}
 				}
@@ -95,22 +100,63 @@ public class Player extends Agent
 			}
 		}
 
-		private int checkWinner(int myTeam, int oppTeam)
-		{
-			if(myTeam + 1 == oppTeam) {
-				return 1;
-			}
-			else if(myTeam == oppTeam + 1) {
-				return -1;
-			}
-			else if(myTeam == oppTeam)
-				return 0;
-			else return 2;
+		public void replyOutcome(ACLMessage msg, Outcome outcome) {
+			ACLMessage reply = msg.createReply();
+			reply.setPerformative(ACLMessage.INFORM);
+			reply.setContent(outcome.toString());
 		}
 		
+		private void handleOutcome(Outcome result)
+		{
+			//TODO
+			switch(result)
+			{
+			case VICTORY:
+			{
+				
+				handleVictory();
+				break;
+			}
+			case LOSS:
+			{
+				handleLoss();
+				break;
+			}
+			case SAME_TEAM:
+			{
+				handleSameTeam();
+				break;
+			}
+			case NEUTRAL:
+			{
+				handleNeutral();
+				break;
+			}
+			}
+		}
+		
+		private void handleVictory()
+		{
+		//TODO	
+		}
+		
+		private void handleLoss()
+		{
+		//TODO	
+		}
+		
+		private void handleSameTeam()
+		{
+		//TODO	
+		}
+		
+		private void handleNeutral()
+		{
+		//TODO	
+		}
+
 		@Override
 		public boolean done() {
-
 			return done == 3;
 		}
 
@@ -202,17 +248,7 @@ public class Player extends Agent
 			}
 		}
 	}
-
-	private class PlayGame extends CyclicBehaviour
-	{
-
-		@Override
-		public void action() {
-
-
-		}
-	}
-
+	
 	protected void takeDown() {
 		// Deregister from the yellow pages
 		try
