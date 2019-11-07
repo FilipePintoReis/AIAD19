@@ -1,6 +1,9 @@
+package personality;
+
 import java.util.HashMap;
 
 import jade.core.AID;
+import main.PlayerStruct;
 
 public interface Personality {
 	public boolean decideToBattle(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct);

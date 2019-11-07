@@ -1,5 +1,7 @@
-
+package main;
 public class Utilities {
+	private final static int NUMBER_OF_TEAMS = 5;
+	
 	public static boolean isNeutral(Integer teamNumber, Integer comparisonN) {
 		switch(teamNumber) {
 			case 1:
@@ -18,40 +20,20 @@ public class Utilities {
 	}
 	
 	public static boolean diesHorribly(Integer teamNumber, Integer comparisonN) {
-		switch(teamNumber) {
-		case 1:
-			return comparisonN == 5;
-		case 2:
-			return comparisonN == 1;
-		case 3:
-			return comparisonN == 2;
-		case 4:
-			return comparisonN == 3;
-		case 5:
-			return comparisonN == 4;
-		default:
-			return false;
-		}
+		return getPrey(comparisonN) == teamNumber;
 	}
 	
 	public static boolean killsTheEnemy(Integer teamNumber, Integer comparisonN) {
-		switch(teamNumber) {
-		case 1:
-			return comparisonN == 5;
-		case 2:
-			return comparisonN == 1;
-		case 3:
-			return comparisonN == 2;
-		case 4:
-			return comparisonN == 3;
-		case 5:
-			return comparisonN == 4;
-		default:
-			return false;
-		}
+		return getPrey(teamNumber) == comparisonN;
 	}
 	
-	public static boolean isFromMyTeam(Integer teamNumber, Integer comparisonN) {
+	public static boolean isOnMyTeam(Integer teamNumber, Integer comparisonN) {
 		return teamNumber == comparisonN;
+	}
+	
+	private static int getPrey(int teamNumber) {
+		if(teamNumber == NUMBER_OF_TEAMS)
+			return 1;
+		else return teamNumber + 1;
 	}
 }

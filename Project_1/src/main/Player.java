@@ -1,9 +1,10 @@
+package main;
 import java.io.Serializable;
 import java.util.HashMap;
+
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.SequentialBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
@@ -13,10 +14,9 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 
+@SuppressWarnings("serial")
 public class Player extends Agent
 {
-	private static final int ALIVE = 0;
-	private static final int DEAD = 1;
 	private int teamNumber;
 	private int groupNumber = -1;
 
@@ -24,21 +24,7 @@ public class Player extends Agent
 
 	public void setup()
 	{
-		DFAgentDescription dfd = new DFAgentDescription();
-		dfd.setName(getAID());
-		ServiceDescription sd = new ServiceDescription();
-		sd.setType("player");
-		sd.setName("JADE-battle-royale");
-		dfd.addServices(sd);
-
-		try 
-		{
-			DFService.register(this, dfd);
-		} catch (FIPAException fe) 
-		{
-			fe.printStackTrace();
-		}
-
+		registerOnDFD();
 		System.out.println(getLocalName());
 
 		addBehaviour(new DuelPlayer());
@@ -53,6 +39,23 @@ public class Player extends Agent
 		//		addBehaviour(playerBehaviour);
 	}
 
+	private void registerOnDFD() {
+		DFAgentDescription dfd = new DFAgentDescription();
+		dfd.setName(getAID());
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType("player");
+		sd.setName("JADE-battle-royale");
+		dfd.addServices(sd);
+
+		try 
+		{
+			DFService.register(this, dfd);
+		} catch (FIPAException fe) 
+		{
+			fe.printStackTrace();
+		}
+	}
+	
 	private class DuelPlayer extends SimpleBehaviour 
 	{
 		private int done = 0;
@@ -84,7 +87,6 @@ public class Player extends Agent
 							Integer duelTeam = Integer.parseInt(msg.getContent());
 							int result = checkWinner(1, duelTeam);
 						}
-							
 					}
 				}
 			}
@@ -176,7 +178,7 @@ public class Player extends Agent
 				case "player-list":
 					try {
 						turnPlayerArrayIntoMap(msg.getContentObject(), playerMap);
-						playerMap.put(myAgent.getAID(), new PlayerStruct(teamNumber, ALIVE));
+						playerMap.put(myAgent.getAID(), new PlayerStruct(teamNumber));
 					} catch (UnreadableException e) {					
 						e.printStackTrace();
 						System.err.println("Couldn't retrieve player List from message.");
@@ -197,7 +199,7 @@ public class Player extends Agent
 			AID[] array = (AID[]) playerArray;
 			for(int i = 0; i < array.length; i++)
 			{
-				playerMap.put(array[i], new PlayerStruct(-1, ALIVE));
+				playerMap.put(array[i], new PlayerStruct(-1));
 			}
 		}
 	}

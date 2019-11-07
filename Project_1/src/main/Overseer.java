@@ -1,3 +1,4 @@
+package main;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -7,27 +8,24 @@ import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
-
 import java.io.IOException;
 import java.util.HashMap;
 
+@SuppressWarnings("serial")
 public class Overseer extends Agent
 {
-	private static final int ALIVE = 0;
-	private static final int DEAD = 1;
+	private final int TIME_TO_WAKE = 5 * 1000;
 	
 	public final int NUMBER_OF_TEAMS = 5;
 
 	private HashMap<AID, PlayerStruct> playerMap;
 
-	//TODO temporary array, convert to map
 	private AID[] players;
 
 	public void setup()
 	{
 		playerMap = new HashMap<>();
-		addBehaviour(new CheckPlayers(this, 5000));
+		addBehaviour(new CheckPlayers(this, TIME_TO_WAKE));
 	}
 
 	/*
@@ -71,7 +69,7 @@ public class Overseer extends Agent
 				for(int j = 0; j < players.length / NUMBER_OF_TEAMS; j++)
 				{
 					informTeam.addReceiver(players[playerIndex++]);
-					playerMap.put(players[playerIndex], new PlayerStruct(i, ALIVE));
+					playerMap.put(players[playerIndex], new PlayerStruct(i));
 					
 
 				}
@@ -95,51 +93,4 @@ public class Overseer extends Agent
 			send(playersListMsg);
 		}
 	}
-
-	private class OverseerBehaviour extends CyclicBehaviour
-	{
-		@Override
-		public void action()
-		{
-			ACLMessage msg = receive();
-			if(msg != null)
-			{
-				String msgContent = msg.getContent();
-				switch(msgContent){
-				case "BIRTH": 
-				{
-					//TODO choose team number
-					Integer teamNumber = 1;
-					announceBirth(msg.getSender(), teamNumber);
-					break;
-				}
-				case "DEATH":
-				{
-					announceDeath(msg.getSender());
-					break;
-				}
-				}
-			}
-			else block();
-		}
-		private void announceBirth(AID newbornPlayer, Integer teamNumber)
-		{
-			// TODO Send messages to all existing agents about new birth
-			playerMap.put(newbornPlayer, new PlayerStruct(teamNumber, ALIVE));
-			System.out.println("New Birth: " + newbornPlayer.getLocalName() + "\tTeam: " + teamNumber);
-			System.out.println(playerMap.toString());
-		}
-
-		private void announceDeath(AID deceasedPlayer)
-		{
-			PlayerStruct deceasedStruct = playerMap.get(deceasedPlayer);
-			playerMap.remove(deceasedPlayer);
-			//TODO Send message to all alive agents about new death
-			System.out.println("New Death: " + deceasedPlayer.getLocalName() + "\tTeam: " + deceasedStruct.team);
-			System.out.println(playerMap.toString());
-
-		}
-	}
-
-
 }

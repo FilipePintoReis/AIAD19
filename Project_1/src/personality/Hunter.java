@@ -1,13 +1,13 @@
+package personality;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
-
 import jade.core.AID;
+import main.PlayerStruct;
+import main.Utilities;
 
 public class Hunter implements Personality {
 	private static final int UNKNOWN = -1;
-	private static final int ALIVE = 0;
-	private static final int DEAD = 1;
 	
 	@Override
 	public boolean decideToBattle(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
@@ -24,19 +24,19 @@ public class Hunter implements Personality {
 		ArrayList<ArrayList<AID>> killsMeTeam = new ArrayList<ArrayList<AID>>(); 
 		ArrayList<ArrayList<AID>> idkTeam = new ArrayList<ArrayList<AID>>();
 		playerMap.forEach((key, value)->{
-			if(value.team == UNKNOWN ) {
+			if(value.getTeam() == UNKNOWN ) {
 					idkTeam.get(0).add(key);
 			}
-			if(Utilities.isNeutral(ownStruct.team, value.team)) {
+			if(Utilities.isNeutral(ownStruct.getTeam(), value.getTeam())) {
 				neutralTeam.get(0).add(key);
 			}
-			if(Utilities.diesHorribly(ownStruct.team, value.team)) {
+			if(Utilities.diesHorribly(ownStruct.getTeam(), value.getTeam())) {
 				iKillTeam.get(0).add(key);
 			}
-			if(Utilities.killsTheEnemy(ownStruct.team, value.team)) {
+			if(Utilities.killsTheEnemy(ownStruct.getTeam(), value.getTeam())) {
 				killsMeTeam.get(0).add(key);
 			}
-			if(Utilities.isFromMyTeam(ownStruct.team, value.team)) {
+			if(Utilities.isOnMyTeam(ownStruct.getTeam(), value.getTeam())) {
 				myTeam.get(0).add(key);
 			}
 		});
@@ -72,7 +72,7 @@ public class Hunter implements Personality {
 		boolean[] retVal = {false};
 		
 		playerMap.forEach((key, value)->{
-			if(key == proposedPlayer && value.team == UNKNOWN) {
+			if(key == proposedPlayer && value.getTeam() == UNKNOWN) {
 				retVal[0] = true;
 			}
 		});
@@ -84,16 +84,16 @@ public class Hunter implements Personality {
 	public AID decideWhatToNegotiate(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
 		
 		AID[] retVal = {null};
-		if(ownStruct.team != 1)
+		if(ownStruct.getTeam() != 1)
 			playerMap.forEach((key, value)->{
-				if(value.team == ownStruct.team-1) {
+				if(value.getTeam() == ownStruct.getTeam() - 1) {
 					retVal[0] = key;
 				}
 			});
 		
 		else
 			playerMap.forEach((key, value)->{
-				if(value.team == 5) {
+				if(value.getTeam() == 5) {
 					retVal[0] = key;
 				}
 			});
