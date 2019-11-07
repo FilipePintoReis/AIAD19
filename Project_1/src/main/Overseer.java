@@ -8,6 +8,8 @@ import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -55,6 +57,12 @@ public class Overseer extends Agent
 			{
 				fe.printStackTrace();
 			}
+			
+			for(int i = 0; i < players.length; i++)
+			{
+				System.out.println(players[i].getLocalName());
+			}
+			
 			informPlayerTeams();
 
 			myAgent.addBehaviour(new GameLoop());
@@ -69,8 +77,9 @@ public class Overseer extends Agent
 				ACLMessage informTeam = new ACLMessage(ACLMessage.INFORM);
 				for(int j = 0; j < players.length / NUMBER_OF_TEAMS; j++)
 				{
-					informTeam.addReceiver(players[playerIndex++]);
+					informTeam.addReceiver(players[playerIndex]);
 					playerMap.put(players[playerIndex], new PlayerStruct(i));
+					playerIndex++;
 
 
 				}
@@ -95,15 +104,30 @@ public class Overseer extends Agent
 		}
 	}
 
+
 	private class GameLoop extends SimpleBehaviour {
 		private int playerStart = 0;
 		private int playerIndex = 0;
 		private Integer roundNumber = 0;
-		
+
+		private boolean inRound = false;
+
 		@Override
 		public void action() {
-			// TODO Auto-generated method stub
+			if (inRound) listenRoundEnd();
+			else roundStart();
+		}
 
+		private void listenRoundEnd()
+		{
+			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
+			ACLMessage msg = receive(mt);
+			if (msg != null && msg.getConversationId().equals("round-start")) {
+				if (msg.getContent().equals("DONE"))
+					inRound = false;
+				else System.err.println("Received unexpected message for end of round.");
+			}
+			else block();
 		}
 
 		private void roundStart()
@@ -117,6 +141,7 @@ public class Overseer extends Agent
 
 			sendStartRound(players[playerIndex]);
 			playerIndex++;
+			inRound = true;
 		}
 
 		private void sendStartRound(AID player) {
@@ -129,7 +154,7 @@ public class Overseer extends Agent
 
 		@Override
 		public boolean done() {
-			// TODO Auto-generated method stub
+			// TODO Define done function
 			return false;
 		}
 

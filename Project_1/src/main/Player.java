@@ -1,9 +1,9 @@
 package main;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
 import jade.domain.DFService;
@@ -22,17 +22,17 @@ import personality.Personality;
 @SuppressWarnings("serial")
 public class Player extends Agent
 {
-	private int teamNumber;
+	public int teamNumber;
 	private int groupNumber = -1;
 
 	private Personality personality;
 
 	private HashMap<AID, PlayerStruct> playerMap = new HashMap<AID, PlayerStruct>();
 
+	@Override
 	public void setup()
 	{
 		registerOnDFD();
-		System.out.println(getLocalName());
 		// TODO parseArguments();
 
 		//addBehaviour(new DuelPlayer());
@@ -42,7 +42,7 @@ public class Player extends Agent
 
 		SequentialBehaviour playerBehaviour = new SequentialBehaviour(this);
 		playerBehaviour.addSubBehaviour(new TeamListener());
-
+		playerBehaviour.addSubBehaviour(new RoundListener());
 
 
 
@@ -193,7 +193,6 @@ public class Player extends Agent
 				case "team-number":
 					if(!hasTeam) {
 						teamNumber = Integer.parseInt(msg.getContent());
-						System.out.println(myAgent.getLocalName() + " " + teamNumber);
 						hasTeam = true;
 					}
 					break;
@@ -206,8 +205,6 @@ public class Player extends Agent
 							System.err.println("Couldn't retrieve player List from message.");
 						}
 						hasPlayerList = true;
-						System.out.println(playerMap.toString());
-						System.out.println("I have the List");
 					}
 					break;
 				}
@@ -230,9 +227,48 @@ public class Player extends Agent
 		}
 	}
 
+	private class RoundListener extends SimpleBehaviour {
+		@Override
+		public void action() {
+			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
+			ACLMessage msg = receive(mt);
+			if( msg != null && msg.getConversationId().equals("round-start")) {
+				int roundNumber = Integer.parseInt(msg.getContent());
+				roundAction();
+				sendEndRound(msg);
+			}
+			else block();
+		}
+
+		private void roundAction() {
+			//TODO call action, probably has to do with personality7
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			System.out.println("JOB " + myAgent.getLocalName());
+		}
+		
+		private void sendEndRound(ACLMessage msg)
+		{
+			ACLMessage reply = msg.createReply();
+			reply.setPerformative(ACLMessage.INFORM);
+			reply.setContent("DONE");
+			send(reply);
+		}
+		
+		@Override
+		public boolean done() {
+			// TODO stop listening to rounds probably on death
+			return false;
+		}
+		
+	}
+	
 	private void handleOutcome(Outcome result)
 	{
-		//TODO
+		//TODO Implement various handles
 		switch(result)
 		{
 		case VICTORY:
@@ -260,22 +296,22 @@ public class Player extends Agent
 
 	private void handleVictory()
 	{
-		//TODO	
+		//TODO	What to do on Victory
 	}
 
 	private void handleLoss()
 	{
-		//TODO	
+		//TODO	What to do on Loss (death)
 	}
 
 	private void handleSameTeam()
 	{
-		//TODO	
+		//TODO	What to do if ally
 	}
 
 	private void handleNeutral()
 	{
-		//TODO	
+		//TODO	what else?
 	}
 
 	protected void takeDown() {
@@ -288,6 +324,6 @@ public class Player extends Agent
 		{
 			fe.printStackTrace();
 		}
-		System.out.println("Player-agent" + getAID().getLocalName() + "terminating.");
+		System.out.println("Player-agent " + getAID().getLocalName() + " terminating.");
 	}
 }
