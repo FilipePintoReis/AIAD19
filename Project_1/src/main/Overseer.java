@@ -11,7 +11,6 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -79,32 +78,22 @@ public class Overseer extends Agent
 			//Send each player their team Number
 			for(Integer i = 0; i < NUMBER_OF_TEAMS; i++)
 			{
-				ACLMessage informTeam = new ACLMessage(ACLMessage.INFORM);
+				ACLMessage informTeam = MessageHandler.prepareMessage(ACLMessage.INFORM, null, "team-number", i.toString());
 				for(int j = 0; j < players.length / NUMBER_OF_TEAMS; j++)
 				{
 					informTeam.addReceiver(players[playerIndex]);
 					playerMap.put(players[playerIndex], new PlayerStruct(i));
 					playerIndex++;
-
-
 				}
-				informTeam.setContent(i.toString());
-				informTeam.setConversationId("team-number");
 				send(informTeam);
 			}
 
 			//Send each player a copy of all available players, without knowing the teams
-			ACLMessage playersListMsg = new ACLMessage(ACLMessage.INFORM);
+			ACLMessage playersListMsg = MessageHandler.prepareMessageObject(ACLMessage.INFORM, null, "player-list", players);
 			for(int i = 0; i < players.length; i++)
 			{
 				playersListMsg.addReceiver(players[i]);
 			}
-			try {
-				playersListMsg.setContentObject(players);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			playersListMsg.setConversationId("player-list");
 			send(playersListMsg);
 		}
 	}
@@ -142,10 +131,7 @@ public class Overseer extends Agent
 		}
 
 		private void sendStartRound(AID player) {
-			ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-			msg.addReceiver(player);
-			msg.setConversationId("round-start");
-			msg.setContent(roundNumber.toString());
+			ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.REQUEST, player, "round-start", roundNumber.toString());
 			send(msg);
 		}
 
@@ -183,9 +169,7 @@ public class Overseer extends Agent
 		}
 
 		private void propagateDeath(String playerName) {
-			ACLMessage msg = new ACLMessage(ACLMessage.PROPAGATE);
-			msg.setConversationId("player-death");
-			msg.setContent(playerName);
+			ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.PROPAGATE, null, "player-death", playerName);
 			for(int i = 0; i < players.length; i++)
 			{
 				msg.addReceiver(players[i]);

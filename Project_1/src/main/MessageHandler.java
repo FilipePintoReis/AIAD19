@@ -1,22 +1,39 @@
 package main;
+
+import java.io.IOException;
+import java.io.Serializable;
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
 
 public class MessageHandler {
-	private static AID overseer = new AID("overseer", AID.ISLOCALNAME);
-
-	public static ACLMessage getBirthMessage()
+	protected static ACLMessage prepareMessage(int performative, AID receiver, String conversationId, String content)
 	{
-		ACLMessage msgBirth = new ACLMessage(ACLMessage.INFORM);
-		msgBirth.setContent("BIRTH");
-		msgBirth.addReceiver(overseer);
-		return msgBirth;
+		ACLMessage msg = new ACLMessage(performative);
+		msg.addReceiver(receiver);
+		msg.setConversationId(conversationId);
+		msg.setContent(content);
+		return msg;
 	}
-	public static ACLMessage getDeathMessage()
+
+	protected static ACLMessage prepareReply(ACLMessage msg, int performative,String content)
 	{
-		ACLMessage msgDeath = new ACLMessage(ACLMessage.INFORM);
-		msgDeath.setContent("DEATH");
-		msgDeath.addReceiver(overseer);
-		return msgDeath;
+		ACLMessage reply = msg.createReply();
+		reply.setPerformative(performative);
+		reply.setContent(content);
+		return reply;
+	}
+
+	protected static ACLMessage prepareMessageObject(int performative, AID receiver, String conversationId, Serializable obj)
+	{
+		ACLMessage msg = new ACLMessage(performative);
+		msg.addReceiver(receiver);
+		msg.setConversationId(conversationId);
+		try {
+			msg.setContentObject(obj);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.err.println("Caught error in function prepareMessageObject.");
+		}
+		return msg;
 	}
 }

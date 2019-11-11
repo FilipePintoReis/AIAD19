@@ -86,10 +86,8 @@ public class Player extends Agent
 					System.out.println(Outcome.VICTORY.toString());
 					System.out.println(myAgent.getLocalName() + " got in duel");
 					System.out.println("Sent message");
-					msg = new ACLMessage(ACLMessage.PROPOSE);
-					msg.setContent("2");
-					msg.setConversationId("duel");
-					msg.addReceiver(new AID("player2", AID.ISLOCALNAME));
+
+					msg = MessageHandler.prepareMessage(ACLMessage.PROPOSE, new AID("player2", AID.ISLOCALNAME), "duel", "2");
 					send(msg);
 					System.out.println("Sent message2");
 					done = 1;
@@ -149,28 +147,9 @@ public class Player extends Agent
 		}
 
 		private void replyOutcome(ACLMessage msg, Outcome outcome) {
-			ACLMessage reply = msg.createReply();
-			reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-			reply.setContent(outcome.toString());
+			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.ACCEPT_PROPOSAL, outcome.toString());
 			send(reply);
 		}
-	}
-
-	private class DeathNote extends SimpleBehaviour{
-
-		@Override
-		public void action() {
-			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-			msg.setContent(getAID().toString());
-			msg.setConversationId("dead");
-			msg.addReceiver(new AID("Overseer", AID.ISLOCALNAME));
-		}
-
-		@Override
-		public boolean done() {
-			return false;
-		}
-
 	}
 
 	private class TeamListener extends SimpleBehaviour
@@ -259,9 +238,7 @@ public class Player extends Agent
 
 		private void sendEndRound(ACLMessage msg)
 		{
-			ACLMessage reply = msg.createReply();
-			reply.setPerformative(ACLMessage.INFORM);
-			reply.setContent("DONE");
+			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.INFORM, "DONE");
 			send(reply);
 		}
 
@@ -332,12 +309,7 @@ public class Player extends Agent
 
 	private void handleLoss()
 	{
-		//TODO	What to do on Loss (death)
-		//inform overseer I have died
-		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-		msg.addReceiver(overseer);
-		msg.setConversationId("inform-death");
-		msg.setContent(this.getLocalName());
+		ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.INFORM, overseer, "inform-death", this.getLocalName());
 		send(msg);
 	}
 
