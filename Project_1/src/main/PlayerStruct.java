@@ -25,6 +25,10 @@ public class PlayerStruct {
 	
 	public State getState() { return this.state;	}
 	
+	public void turnDead() { this.state = State.DEAD;}
+	
+	public boolean isAlive() { return state == State.ALIVE;	}
+	
 	public void setGroup(Integer group) { this.group = group; }
 }
 

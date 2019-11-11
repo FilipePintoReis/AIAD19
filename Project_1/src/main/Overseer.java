@@ -1,6 +1,8 @@
 package main;
+
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
 import jade.core.behaviours.WakerBehaviour;
 import jade.domain.DFService;
@@ -9,7 +11,6 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -24,6 +25,9 @@ public class Overseer extends Agent
 	private HashMap<AID, PlayerStruct> playerMap;
 
 	private AID[] players;
+
+	private boolean inRound = false;
+
 
 	public void setup()
 	{
@@ -57,15 +61,16 @@ public class Overseer extends Agent
 			{
 				fe.printStackTrace();
 			}
-			
+
 			for(int i = 0; i < players.length; i++)
 			{
 				System.out.println(players[i].getLocalName());
 			}
-			
+
 			informPlayerTeams();
 
 			myAgent.addBehaviour(new GameLoop());
+			myAgent.addBehaviour(new MessageListener());
 		}
 
 		private void informPlayerTeams() {
@@ -110,24 +115,17 @@ public class Overseer extends Agent
 		private int playerIndex = 0;
 		private Integer roundNumber = 0;
 
-		private boolean inRound = false;
-
 		@Override
 		public void action() {
-			if (inRound) listenRoundEnd();
-			else roundStart();
-		}
-
-		private void listenRoundEnd()
-		{
-			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
-			ACLMessage msg = receive(mt);
-			if (msg != null && msg.getConversationId().equals("round-start")) {
-				if (msg.getContent().equals("DONE"))
-					inRound = false;
-				else System.err.println("Received unexpected message for end of round.");
+			if (!inRound)
+				roundStart();
+			else {
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
-			else block();
 		}
 
 		private void roundStart()
@@ -138,7 +136,6 @@ public class Overseer extends Agent
 				playerIndex = playerStart;
 				roundNumber++;
 			}
-
 			sendStartRound(players[playerIndex]);
 			playerIndex++;
 			inRound = true;
@@ -157,6 +154,43 @@ public class Overseer extends Agent
 			// TODO Define done function
 			return false;
 		}
+	}
 
+	private class MessageListener extends CyclicBehaviour
+	{
+		@Override
+		public void action() {
+			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
+			ACLMessage msg = receive(mt);
+			if (msg != null) {
+				System.out.println(msg.getContent());
+				switch(msg.getConversationId())
+				{
+				case "round-start": {
+					if (msg.getContent().equals("DONE"))
+						inRound = false;
+					else
+						System.err.println("Received unexpected message for end of round.");
+					break;
+				}
+				case "inform-death": {
+					playerMap.get(msg.getSender()).turnDead();
+					propagateDeath(msg.getContent());
+				}
+				}
+			}
+			else block();
+		}
+
+		private void propagateDeath(String playerName) {
+			ACLMessage msg = new ACLMessage(ACLMessage.PROPAGATE);
+			msg.setConversationId("player-death");
+			msg.setContent(playerName);
+			for(int i = 0; i < players.length; i++)
+			{
+				msg.addReceiver(players[i]);
+			}
+			send(msg);
+		}
 	}
 }

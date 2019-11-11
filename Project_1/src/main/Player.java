@@ -14,18 +14,17 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 import main.Utilities.*;
-import personality.Hunter;
-import personality.Negotiator;
-import personality.Passive;
-import personality.Personality;
+import personality.*;
 
 @SuppressWarnings("serial")
 public class Player extends Agent
 {
+	private AID overseer;
+	private Personality personality;
+	private PlayerStruct myStruct;
+
 	public int teamNumber;
 	private int groupNumber = -1;
-
-	private Personality personality;
 
 	private HashMap<AID, PlayerStruct> playerMap = new HashMap<AID, PlayerStruct>();
 
@@ -34,11 +33,6 @@ public class Player extends Agent
 	{
 		registerOnDFD();
 		// TODO parseArguments();
-
-		//addBehaviour(new DuelPlayer());
-		//addBehaviour(new ListenForDuels());
-
-
 
 		SequentialBehaviour playerBehaviour = new SequentialBehaviour(this);
 		playerBehaviour.addSubBehaviour(new TeamListener());
@@ -77,7 +71,7 @@ public class Player extends Agent
 			fe.printStackTrace();
 		}
 	}
-
+	//TODO for testing
 	private class DuelPlayer extends SimpleBehaviour 
 	{
 		private int done = 0;
@@ -125,7 +119,7 @@ public class Player extends Agent
 		}
 
 	}
-
+	//TODO for testing
 	private class ListenForDuels extends SimpleBehaviour
 	{
 		private boolean done = false;
@@ -189,6 +183,7 @@ public class Player extends Agent
 			ACLMessage msg = receive(mt);
 			if(msg != null)
 			{
+				overseer = msg.getSender();
 				switch(msg.getConversationId()) {
 				case "team-number":
 					if(!hasTeam) {
@@ -218,12 +213,19 @@ public class Player extends Agent
 			{
 				playerMap.put(array[i], new PlayerStruct(-1));
 			}
-			playerMap.put(myAgent.getAID(), new PlayerStruct(teamNumber));
+			myStruct = new PlayerStruct(teamNumber);
+			playerMap.put(myAgent.getAID(), myStruct);
 		}
 
 		@Override
 		public boolean done() {
-			return hasTeam && hasPlayerList;
+			if(hasTeam && hasPlayerList)
+			{
+				myAgent.addBehaviour(new RoundListener());
+				myAgent.addBehaviour(new DeathListener());
+				return true;
+			}
+			else return false;
 		}
 	}
 
@@ -242,14 +244,19 @@ public class Player extends Agent
 
 		private void roundAction() {
 			//TODO call action, probably has to do with personality7
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			if(myStruct.isAlive()) {
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				System.out.println("JOB " + myAgent.getLocalName());
 			}
-			System.out.println("JOB " + myAgent.getLocalName());
+			else {
+				System.out.println("I am dead, let me sleep.");
+			}
 		}
-		
+
 		private void sendEndRound(ACLMessage msg)
 		{
 			ACLMessage reply = msg.createReply();
@@ -257,15 +264,39 @@ public class Player extends Agent
 			reply.setContent("DONE");
 			send(reply);
 		}
-		
+
 		@Override
 		public boolean done() {
 			// TODO stop listening to rounds probably on death
 			return false;
 		}
-		
 	}
-	
+
+	private class DeathListener extends SimpleBehaviour {
+
+		@Override
+		public void action() {
+			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.PROPAGATE);
+			ACLMessage msg = receive(mt);
+			if(msg != null)
+			{
+				switch(msg.getConversationId())
+				{
+				case "player-death":{
+					AID deadPlayer = new AID(msg.getContent(), AID.ISLOCALNAME);
+					playerMap.get(deadPlayer).turnDead();
+					break;
+				}
+				}
+			}
+			else block();
+		}
+		@Override
+		public boolean done() {
+			return !myStruct.isAlive();
+		}
+	}
+
 	private void handleOutcome(Outcome result)
 	{
 		//TODO Implement various handles
@@ -302,6 +333,12 @@ public class Player extends Agent
 	private void handleLoss()
 	{
 		//TODO	What to do on Loss (death)
+		//inform overseer I have died
+		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+		msg.addReceiver(overseer);
+		msg.setConversationId("inform-death");
+		msg.setContent(this.getLocalName());
+		send(msg);
 	}
 
 	private void handleSameTeam()
