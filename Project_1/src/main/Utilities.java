@@ -1,5 +1,7 @@
 package main;
 
+import java.util.ArrayList;
+
 public class Utilities {
 	private final static int NUMBER_OF_TEAMS = 5;
 
@@ -54,5 +56,18 @@ public class Utilities {
 			return 1;
 		else
 			return teamNumber + 1;
+	}
+	
+	public static ArrayList<Integer> personalityDistribution(float passiveP, float negotiatorP, float hunterP, Integer teamSize) {
+		Integer pN = (int) (teamSize*passiveP);
+		Integer nN = (int) (teamSize*negotiatorP);
+		Integer hN = (int) (teamSize*hunterP);
+		Integer missing = teamSize - (pN + nN + hN);
+		Integer fpN = pN + missing;
+		ArrayList<Integer> ret = new ArrayList<Integer>();
+		ret.add(fpN);
+		ret.add(nN);
+		ret.add(hN);
+		return ret;
 	}
 }
