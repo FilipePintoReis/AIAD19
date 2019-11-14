@@ -12,12 +12,15 @@ public class PlayerStruct {
 	private State state; // 0 alive 1 is dead
 	private Integer group;
 	
-	PlayerStruct(Integer team){
+	PlayerStruct(AID aid, Integer team){
+		this.myAID = aid;
 		this.team = team;
 		this.state = State.ALIVE;
 	}
 	
 	public AID getAID() { return this.myAID; }
+	
+	public void setAID(AID aid) { this.myAID = aid;}
 	
 	public Integer getTeam() { return this.team;}
 	

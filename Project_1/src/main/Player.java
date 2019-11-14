@@ -33,7 +33,7 @@ public class Player extends Agent
 	{
 		registerOnDFD();
 		// TODO parseArguments();
-
+		
 		SequentialBehaviour playerBehaviour = new SequentialBehaviour(this);
 		playerBehaviour.addSubBehaviour(new TeamListener());
 		playerBehaviour.addSubBehaviour(new RoundListener());
@@ -129,9 +129,9 @@ public class Player extends Agent
 			AID[] array = (AID[]) playerArray;
 			for(int i = 0; i < array.length; i++)
 			{
-				playerMap.put(array[i], new PlayerStruct(-1));
+				playerMap.put(array[i], new PlayerStruct(array[i], -1));
 			}
-			myStruct = new PlayerStruct(teamNumber);
+			myStruct = new PlayerStruct(this.myAgent.getAID(), teamNumber);
 			playerMap.put(myAgent.getAID(), myStruct);
 		}
 
@@ -140,6 +140,7 @@ public class Player extends Agent
 			if(hasTeam && hasPlayerList && personality != null)
 			{
 				myAgent.addBehaviour(new RoundListener());
+				myAgent.addBehaviour(new InterPlayerListener());
 				myAgent.addBehaviour(new DeathListener());
 				return true;
 			}
@@ -189,23 +190,28 @@ public class Player extends Agent
 
 		//TODO how  to listen to messages without rest of program continue
 		private void duelPlayer(AID opponent) {
-			switch(duelPhase)
-			{
-			case 0:
-				ACLMessage challengeMsg = MessageHandler.prepareMessage(ACLMessage.PROPOSE, opponent, "duel", teamNumber.toString());
-				send(challengeMsg);
-				duelPhase = 1;
-				break;
-			case 1:
-				MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
-				ACLMessage outcomeMessage = receive(mt);
-				if(outcomeMessage != null)
+			boolean duelDone = false;
+			while(duelPhase != 2) {
+				switch(duelPhase)
 				{
-					Outcome outcome = Utilities.adjustOutcome(Outcome.valueOf(outcomeMessage.getContent()));
-					handleOutcome(outcome);
-					duelPhase = 2;
+				case 0:
+					System.out.println("Challenge " + opponent.getLocalName());
+					ACLMessage challengeMsg = MessageHandler.prepareMessage(ACLMessage.PROPOSE, opponent, "duel", teamNumber.toString());
+					send(challengeMsg);
+					duelPhase = 1;
+					break;
+				case 1:
+					MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
+					ACLMessage outcomeMessage = receive(mt);
+					if(outcomeMessage != null)
+					{
+						System.out.println("Response from " + outcomeMessage.getSender().getLocalName());
+						Outcome outcome = Utilities.adjustOutcome(Outcome.valueOf(outcomeMessage.getContent()));
+						handleOutcome(outcome);
+						duelPhase = 2;
+					}
+					else block(); //TODO see if it doens frick up
 				}
-				else block();
 			}
 		}
 
@@ -219,88 +225,6 @@ public class Player extends Agent
 		public boolean done() {
 			// TODO stop listening to rounds probably on death
 			return false;
-		}
-	}
-
-	//TODO for testing
-	private class DuelPlayer extends SimpleBehaviour 
-	{
-		private int done = 0;
-		@Override
-		public void action() {
-			if(myAgent.getLocalName().equals("player1"))
-			{
-				ACLMessage msg = new ACLMessage(ACLMessage.PROPOSE);
-				switch(done)
-				{
-				case 0:
-					System.out.println(Outcome.VICTORY.toString());
-					System.out.println(myAgent.getLocalName() + " got in duel");
-					System.out.println("Sent message");
-
-					msg = MessageHandler.prepareMessage(ACLMessage.PROPOSE, new AID("player2", AID.ISLOCALNAME), "duel", "2");
-					send(msg);
-					System.out.println("Sent message2");
-					done = 1;
-					break;
-				case 1:
-					MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
-					msg = receive(mt);
-					if(msg != null)
-					{
-						Outcome outcome = Utilities.adjustOutcome(Outcome.valueOf(msg.getContent()));
-						handleOutcome(outcome);
-						done = 3;
-					}
-				}
-			}
-			else 
-			{
-				done = 3;
-			}
-		}
-
-
-
-		@Override
-		public boolean done() {
-			return done == 3;
-		}
-
-	}
-
-	//TODO for testing
-	private class ListenForDuels extends SimpleBehaviour
-	{
-		private boolean done = false;
-		@Override
-		public void action() {
-			if(myAgent.getLocalName().equals("player2")) {
-				System.out.println(myAgent.getLocalName() + " got in lsten");
-				MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.PROPOSE);
-				ACLMessage msg = receive(mt);
-				if(msg != null)
-				{	
-					System.out.println("OWO");
-					Integer duelTeam = Integer.parseInt(msg.getContent());
-					teamNumber = 1; //TODO remove
-					Outcome outcome = Utilities.getOutcome(teamNumber, duelTeam);
-					replyOutcome(msg, outcome);
-					handleOutcome(outcome);
-				}
-				else block();
-			}
-			else done = true;
-		}
-
-		@Override
-		public boolean done() {
-			return done;
-		}
-
-		private void replyOutcome(ACLMessage msg, Outcome outcome) {
-			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.ACCEPT_PROPOSAL, outcome.toString());
-			send(reply);
 		}
 	}
 
@@ -327,6 +251,41 @@ public class Player extends Agent
 		public boolean done() {
 			return !myStruct.isAlive();
 		}
+	}
+
+	private class InterPlayerListener extends SimpleBehaviour {
+
+		@Override
+		public void action() {
+			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.PROPOSE);
+			ACLMessage msg = receive(mt);
+			if(msg != null)
+			{
+				switch(msg.getConversationId())
+				{
+				case "duel":
+					System.out.println("Received duel from " + msg.getSender().getLocalName());
+					Integer duelTeam = Integer.parseInt(msg.getContent());
+					Outcome outcome = Utilities.getOutcome(teamNumber, duelTeam);
+					replyOutcome(msg, outcome);
+					handleOutcome(outcome);
+					break;
+				}
+			}
+			else block();
+		}
+
+		private void replyOutcome(ACLMessage msg, Outcome outcome) {
+			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.ACCEPT_PROPOSAL, outcome.toString());
+			send(reply);
+		}
+
+		@Override
+		public boolean done() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
 	}
 
 	private void handleOutcome(Outcome result)

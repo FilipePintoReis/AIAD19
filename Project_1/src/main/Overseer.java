@@ -25,19 +25,19 @@ public class Overseer extends Agent
 
 	private float team_personality_prob[][] = {
 			{
-				20, 30, 50
+				0, 0, 100
 			},
 			{
-				20, 30, 50
+				0, 0, 100
 			},
 			{
-				20, 30, 50
+				0, 0, 100
 			},
 			{
-				20, 30, 50
+				0, 0, 100
 			},
 			{
-				20, 30, 50
+				0, 0, 100
 			}
 	};
 
@@ -107,7 +107,7 @@ public class Overseer extends Agent
 				for(int j = 0; j < players.length / NUMBER_OF_TEAMS; j++)
 				{
 					informTeam.addReceiver(players[playerIndex]);
-					playerMap.put(players[playerIndex], new PlayerStruct(i));
+					playerMap.put(players[playerIndex], new PlayerStruct(players[playerIndex] , i));
 					playerIndex++;
 				}
 				send(informTeam);

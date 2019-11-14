@@ -23,12 +23,19 @@ public class Hunter implements Personality {
 		ArrayList<ArrayList<AID>> iKillTeam = new ArrayList<ArrayList<AID>>(); 
 		ArrayList<ArrayList<AID>> killsMeTeam = new ArrayList<ArrayList<AID>>(); 
 		ArrayList<ArrayList<AID>> idkTeam = new ArrayList<ArrayList<AID>>();
+		idkTeam.add(new ArrayList<AID>());
+		neutralTeam.add(new ArrayList<AID>());
+		iKillTeam.add(new ArrayList<AID>());
+		killsMeTeam.add(new ArrayList<AID>());
+		myTeam.add(new ArrayList<AID>());
+
 		playerMap.forEach((key, value)->{
 			if(!value.isAlive())
 			{
 			}
 			else if(value.getTeam() == UNKNOWN ) {
-				idkTeam.get(0).add(key);
+				ArrayList<AID> a = idkTeam.get(0);
+				a.add(key);
 			}
 			else {
 				switch(Utilities.getOutcome(ownStruct.getTeam(), value.getTeam()))
@@ -45,7 +52,8 @@ public class Hunter implements Personality {
 				}
 				case SAME_TEAM:
 				{
-					myTeam.get(0).add(key);
+					if(!key.getLocalName().equals(ownStruct.getAID().getLocalName()))
+						myTeam.get(0).add(key);
 					break;
 				}
 				case NEUTRAL:
@@ -58,19 +66,19 @@ public class Hunter implements Personality {
 		});
 
 		if(!iKillTeam.get(0).isEmpty()) {
-			return myTeam.get(0).get(0);
+			return iKillTeam.get(0).get(0);
 		}
 		else if(!idkTeam.get(0).isEmpty()) {
-			return myTeam.get(0).get(0);
+			return idkTeam.get(0).get(0);
 		}
 		else if(!myTeam.get(0).isEmpty()) {
 			return myTeam.get(0).get(0);
 		}
 		else if(!neutralTeam.get(0).isEmpty()) {
-			return myTeam.get(0).get(0);
+			return neutralTeam.get(0).get(0);
 		}
 		else if(!killsMeTeam.get(0).isEmpty()) {
-			return myTeam.get(0).get(0);
+			return killsMeTeam.get(0).get(0);
 		}
 
 		return null;

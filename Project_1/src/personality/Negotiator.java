@@ -33,12 +33,18 @@ public class Negotiator implements Personality {
 		ArrayList<ArrayList<AID>> iKillTeam = new ArrayList<ArrayList<AID>>(); 
 		ArrayList<ArrayList<AID>> killsMeTeam = new ArrayList<ArrayList<AID>>(); 
 		ArrayList<ArrayList<AID>> idkTeam = new ArrayList<ArrayList<AID>>();
-		playerMap.forEach((key, value)->{			
+		idkTeam.add(new ArrayList<AID>());
+		neutralTeam.add(new ArrayList<AID>());
+		iKillTeam.add(new ArrayList<AID>());
+		killsMeTeam.add(new ArrayList<AID>());
+		myTeam.add(new ArrayList<AID>());
+		playerMap.forEach((key, value)->{
 			if(!value.isAlive())
 			{
 			}
 			else if(value.getTeam() == UNKNOWN ) {
-					idkTeam.get(0).add(key);
+				ArrayList<AID> a = idkTeam.get(0);
+				a.add(key);
 			}
 			else {
 				switch(Utilities.getOutcome(ownStruct.getTeam(), value.getTeam()))
@@ -55,7 +61,8 @@ public class Negotiator implements Personality {
 				}
 				case SAME_TEAM:
 				{
-					myTeam.get(0).add(key);
+					if(!key.getLocalName().equals(ownStruct.getAID().getLocalName()))
+						myTeam.get(0).add(key);
 					break;
 				}
 				case NEUTRAL:

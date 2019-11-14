@@ -9,7 +9,7 @@ import main.Utilities;
 
 public class Passive implements Personality {
 	private static final int UNKNOWN = -1;
-	
+
 	@Override
 	public boolean decideToBattle(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
 		int value = ThreadLocalRandom.current().nextInt(0,101);
@@ -24,13 +24,18 @@ public class Passive implements Personality {
 		ArrayList<ArrayList<AID>> iKillTeam = new ArrayList<ArrayList<AID>>(); 
 		ArrayList<ArrayList<AID>> killsMeTeam = new ArrayList<ArrayList<AID>>(); 
 		ArrayList<ArrayList<AID>> idkTeam = new ArrayList<ArrayList<AID>>();
-
-		playerMap.forEach((key, value)->{			
+		idkTeam.add(new ArrayList<AID>());
+		neutralTeam.add(new ArrayList<AID>());
+		iKillTeam.add(new ArrayList<AID>());
+		killsMeTeam.add(new ArrayList<AID>());
+		myTeam.add(new ArrayList<AID>());
+		playerMap.forEach((key, value)->{
 			if(!value.isAlive())
 			{
 			}
 			else if(value.getTeam() == UNKNOWN ) {
-					idkTeam.get(0).add(key);
+				ArrayList<AID> a = idkTeam.get(0);
+				a.add(key);
 			}
 			else {
 				switch(Utilities.getOutcome(ownStruct.getTeam(), value.getTeam()))
@@ -47,7 +52,8 @@ public class Passive implements Personality {
 				}
 				case SAME_TEAM:
 				{
-					myTeam.get(0).add(key);
+					if(!key.getLocalName().equals(ownStruct.getAID().getLocalName()))
+						myTeam.get(0).add(key);
 					break;
 				}
 				case NEUTRAL:
@@ -58,7 +64,7 @@ public class Passive implements Personality {
 				}
 			}
 		});
-		
+
 		if(!myTeam.get(0).isEmpty()) {
 			return myTeam.get(0).get(0);
 		}
@@ -74,31 +80,31 @@ public class Passive implements Personality {
 		else if(!killsMeTeam.get(0).isEmpty()) {
 			return myTeam.get(0).get(0);
 		}
-		
+
 		return null;
 	}
- 
+
 	@Override
 	public boolean decideInitiateNegotiation(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
 		return true;
 	}
-	
+
 	@Override
 	public boolean acceptNegotiation(HashMap<AID, PlayerStruct> playerMap, AID proposedPlayer) {
 		boolean[] retVal = {false};
-		
+
 		playerMap.forEach((key, value)->{
 			if(key == proposedPlayer && value.getTeam() == UNKNOWN) {
 				retVal[0] = true;
 			}
 		});
-		
+
 		return retVal[0];
 	}
 
 	@Override
 	public AID decideWhatToNegotiate(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
-		
+
 		AID[] retVal = {null};
 		if(ownStruct.getTeam() != 1)
 			playerMap.forEach((key, value)->{
@@ -106,7 +112,7 @@ public class Passive implements Personality {
 					retVal[0] = key;
 				}
 			});
-		
+
 		else
 			playerMap.forEach((key, value)->{
 				if(value.getTeam() == 5) {
