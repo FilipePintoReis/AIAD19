@@ -20,7 +20,7 @@ import personality.*;
 public class Player extends Agent
 {
 	private AID overseer;
-	private Personality personality;
+	private Personality personality = null;
 	private PlayerStruct myStruct;
 
 	public int teamNumber;
@@ -181,10 +181,29 @@ public class Player extends Agent
 						hasPlayerList = true;
 					}
 					break;
+				case "personality":
+					if(this.personality == null) {
+							String pers = msg.getContent();
+							switch(pers){
+								case "hunter":
+								this.personality = new Hunter();
+								break;
+								case "passive":
+								this.personality = new Passive();
+								break;
+								case "negotiator":
+								this.personality = new Negotiator();
+								break;
+
+							}
+					}
+					break;
 				}
 			}
 			else block();
 		}
+
+		
 
 		private void turnPlayerArrayIntoMap(Serializable playerArray, HashMap<AID, PlayerStruct> playerMap) {
 			AID[] array = (AID[]) playerArray;
