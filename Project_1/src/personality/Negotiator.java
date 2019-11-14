@@ -12,13 +12,9 @@ public class Negotiator implements Personality {
 	
 	@Override
 	public boolean decideToBattle(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
-		Integer[] existentPlayers = {0};
 		Integer[] knownPlayers = {0};
 		Integer[] neutralPlayers = {0};
 		playerMap.forEach((key, value)->{
-			if(value.getState() == PlayerStruct.State.ALIVE) {
-				existentPlayers[0]++;
-			}
 			if(value.getTeam() != UNKNOWN ) {
 				knownPlayers[0]++;
 				Outcome outcome = Utilities.getOutcome(ownStruct.getTeam(), value.getTeam());
@@ -38,7 +34,10 @@ public class Negotiator implements Personality {
 		ArrayList<ArrayList<AID>> killsMeTeam = new ArrayList<ArrayList<AID>>(); 
 		ArrayList<ArrayList<AID>> idkTeam = new ArrayList<ArrayList<AID>>();
 		playerMap.forEach((key, value)->{			
-			if(value.getTeam() == UNKNOWN ) {
+			if(!value.isAlive())
+			{
+			}
+			else if(value.getTeam() == UNKNOWN ) {
 					idkTeam.get(0).add(key);
 			}
 			else {

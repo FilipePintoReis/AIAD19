@@ -11,15 +11,37 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("serial")
 public class Overseer extends Agent
 {
-	private final int TIME_TO_WAKE = 5 * 1000;
+	public final int NUMBER_OF_TEAMS = 5;	
 
-	public final int NUMBER_OF_TEAMS = 5;
+	//Sum of *_PROB should be 1.0
+
+	private float team_personality_prob[][] = {
+			{
+				20, 30, 50
+			},
+			{
+				20, 30, 50
+			},
+			{
+				20, 30, 50
+			},
+			{
+				20, 30, 50
+			},
+			{
+				20, 30, 50
+			}
+	};
+
+	private final int TIME_TO_WAKE = 5 * 1000;
 
 	private HashMap<AID, PlayerStruct> playerMap;
 
@@ -27,10 +49,12 @@ public class Overseer extends Agent
 
 	private boolean inRound = false;
 
+	private ArrayList<Integer> personalityDistribution;
 
 	public void setup()
 	{
 		playerMap = new HashMap<>();
+		//		personalityDistribution = Utilities.personalityDistribution(PASSIVE_PROB, NEGOTIATOR_PROB, HUNTER_PROB, NUMBER_OF_TEAMS);
 		addBehaviour(new CheckPlayers(this, TIME_TO_WAKE));
 	}
 
@@ -67,6 +91,7 @@ public class Overseer extends Agent
 			}
 
 			informPlayerTeams();
+			informPersonalities();
 
 			myAgent.addBehaviour(new GameLoop());
 			myAgent.addBehaviour(new MessageListener());
@@ -96,9 +121,35 @@ public class Overseer extends Agent
 			}
 			send(playersListMsg);
 		}
+
+		private void informPersonalities() {
+			int playerIndex = 0;
+			for (int i = 0; i < NUMBER_OF_TEAMS; i++)
+			{
+				for (int j = 0; j < players.length / NUMBER_OF_TEAMS; j++)
+				{
+					String personality = getPersonalityChance(team_personality_prob[i]);
+					ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.INFORM, players[playerIndex], "personality", personality);
+					send(msg);
+					playerIndex++;
+				}
+			}
+		}
+
+		private String getPersonalityChance(float[] chance) {
+			int random = ThreadLocalRandom.current().nextInt(0, 100);
+			if(random < chance[0])
+				return "PASSIVE";
+
+			random -= chance[0];
+			if(random < chance[1])
+				return "NEGOTIATOR";
+
+			return "HUNTER";
+		}
+
 	}
-
-
+	
 	private class GameLoop extends SimpleBehaviour {
 		private int playerStart = 0;
 		private int playerIndex = 0;

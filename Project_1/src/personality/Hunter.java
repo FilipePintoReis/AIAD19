@@ -8,7 +8,7 @@ import main.Utilities;
 
 public class Hunter implements Personality {
 	private static final int UNKNOWN = -1;
-	
+
 	@Override
 	public boolean decideToBattle(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
 		int value = ThreadLocalRandom.current().nextInt(0,101);
@@ -23,9 +23,12 @@ public class Hunter implements Personality {
 		ArrayList<ArrayList<AID>> iKillTeam = new ArrayList<ArrayList<AID>>(); 
 		ArrayList<ArrayList<AID>> killsMeTeam = new ArrayList<ArrayList<AID>>(); 
 		ArrayList<ArrayList<AID>> idkTeam = new ArrayList<ArrayList<AID>>();
-		playerMap.forEach((key, value)->{			
-			if(value.getTeam() == UNKNOWN ) {
-					idkTeam.get(0).add(key);
+		playerMap.forEach((key, value)->{
+			if(!value.isAlive())
+			{
+			}
+			else if(value.getTeam() == UNKNOWN ) {
+				idkTeam.get(0).add(key);
 			}
 			else {
 				switch(Utilities.getOutcome(ownStruct.getTeam(), value.getTeam()))
@@ -53,7 +56,7 @@ public class Hunter implements Personality {
 				}
 			}
 		});
-		
+
 		if(!iKillTeam.get(0).isEmpty()) {
 			return myTeam.get(0).get(0);
 		}
@@ -69,7 +72,7 @@ public class Hunter implements Personality {
 		else if(!killsMeTeam.get(0).isEmpty()) {
 			return myTeam.get(0).get(0);
 		}
-		
+
 		return null;
 	}
 
@@ -79,23 +82,23 @@ public class Hunter implements Personality {
 		boolean retval = value >= 50 ? true: false;
 		return retval;
 	}
-	
+
 	@Override
 	public boolean acceptNegotiation(HashMap<AID, PlayerStruct> playerMap, AID proposedPlayer) {
 		boolean[] retVal = {false};
-		
+
 		playerMap.forEach((key, value)->{
 			if(key == proposedPlayer && value.getTeam() == UNKNOWN) {
 				retVal[0] = true;
 			}
 		});
-		
+
 		return retVal[0];
 	}
 
 	@Override
 	public AID decideWhatToNegotiate(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
-		
+
 		AID[] retVal = {null};
 		if(ownStruct.getTeam() != 1)
 			playerMap.forEach((key, value)->{
@@ -103,7 +106,7 @@ public class Hunter implements Personality {
 					retVal[0] = key;
 				}
 			});
-		
+
 		else
 			playerMap.forEach((key, value)->{
 				if(value.getTeam() == 5) {

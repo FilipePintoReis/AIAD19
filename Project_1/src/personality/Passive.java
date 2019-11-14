@@ -26,7 +26,10 @@ public class Passive implements Personality {
 		ArrayList<ArrayList<AID>> idkTeam = new ArrayList<ArrayList<AID>>();
 
 		playerMap.forEach((key, value)->{			
-			if(value.getTeam() == UNKNOWN ) {
+			if(!value.isAlive())
+			{
+			}
+			else if(value.getTeam() == UNKNOWN ) {
 					idkTeam.get(0).add(key);
 			}
 			else {
