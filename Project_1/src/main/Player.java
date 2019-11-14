@@ -185,13 +185,13 @@ public class Player extends Agent
 					if(this.personality == null) {
 							String pers = msg.getContent();
 							switch(pers){
-								case "hunter":
+								case "HUNTER":
 								this.personality = new Hunter();
 								break;
-								case "passive":
+								case "PASSIVE":
 								this.personality = new Passive();
 								break;
-								case "negotiator":
+								case "NEGOTIATOR":
 								this.personality = new Negotiator();
 								break;
 
