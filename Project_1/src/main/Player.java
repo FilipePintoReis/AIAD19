@@ -19,6 +19,7 @@ import personality.*;
 @SuppressWarnings("serial")
 public class Player extends Agent
 {
+	private static final int UNKNOWN = -1;
 	private AID overseer;
 	private Personality personality = null;
 	private PlayerStruct myStruct;
@@ -265,7 +266,7 @@ public class Player extends Agent
 				{
 				case "duel":
 					System.out.println("Received duel from " + msg.getSender().getLocalName());
-					Integer duelTeam = Integer.parseInt(msg.getContent());
+					Integer duelTeam = Integer.parseInt(msg.getCContent());
 					Outcome outcome = Utilities.getOutcome(teamNumber, duelTeam);
 					replyOutcome(msg, outcome);
 					handleOutcome(outcome);
@@ -273,11 +274,11 @@ public class Player extends Agent
 				case "negotiation":
 					System.out.println("Received negotiation from " + msg.getSender().getLocalName());
 					String proposed = msg.getContent();
-					if(hasInfo()){
+					AID a = new AID(proposed, AID.ISLOCALNAME);
+					if(hasInfo(a)){
 						MessageTemplate propose = MessageTemplate.MatchPerformative(ACLMessage.REJECT_PROPOSAL);
 					}
 					else {
-						AID a = new AID(proposed, AID.ISLOCALNAME);
 						boolean acceptance = this.personality.acceptNegotiation(this.playerMap, a);
 						ACLMessage reply = MessageHandler.prepareReply(msg, null, null);
 						if(acceptance)
@@ -291,6 +292,17 @@ public class Player extends Agent
 				}
 			}
 			else block();
+		}
+
+		public boolean hasInfo(AID a){
+			boolean[] retVal = {false};
+			playerMap.forEach((key, value)->{
+				if(a == key) {
+					if(value.team == UNKNOWN)
+						retVal[0] = true;
+				}
+			});
+			return retVal[0];
 		}
 
 		private void replyOutcome(ACLMessage msg, Outcome outcome) {
