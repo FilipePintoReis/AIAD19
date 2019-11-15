@@ -270,6 +270,12 @@ public class Player extends Agent
 					replyOutcome(msg, outcome);
 					handleOutcome(outcome);
 					break;
+				case "negotiation":
+					System.out.println("Received negotiation from " + msg.getSender().getLocalName());
+					break;
+				case "group":
+					System.out.println("Player " + msg.getSender().getLocalName() + " joined group.");
+					break;
 				}
 			}
 			else block();
