@@ -272,9 +272,21 @@ public class Player extends Agent
 					break;
 				case "negotiation":
 					System.out.println("Received negotiation from " + msg.getSender().getLocalName());
-					break;
-				case "group":
-					System.out.println("Player " + msg.getSender().getLocalName() + " joined group.");
+					String proposed = msg.getContent();
+					if(hasInfo()){
+						MessageTemplate propose = MessageTemplate.MatchPerformative(ACLMessage.REJECT_PROPOSAL);
+					}
+					else {
+						AID a = new AID(proposed, AID.ISLOCALNAME);
+						boolean acceptance = this.personality.acceptNegotiation(this.playerMap, a);
+						ACLMessage reply = MessageHandler.prepareReply(msg, null, null);
+						if(acceptance)
+							reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+						else
+							reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
+						send(reply);
+					}
+					
 					break;
 				}
 			}
