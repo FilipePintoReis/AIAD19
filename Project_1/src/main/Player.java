@@ -296,7 +296,7 @@ public class Player extends Agent
 				{
 				case "duel":
 					System.out.println("Received duel from " + msg.getSender().getLocalName());
-					Integer duelTeam = Integer.parseInt(msg.getCContent());
+					Integer duelTeam = Integer.parseInt(msg.getContent());
 					Outcome outcome = Utilities.getOutcome(teamNumber, duelTeam);
 					replyOutcome(msg, outcome, teamNumber);
 					handleOutcome(outcome, msg.getSender(), duelTeam);
@@ -309,8 +309,8 @@ public class Player extends Agent
 						MessageTemplate propose = MessageTemplate.MatchPerformative(ACLMessage.REJECT_PROPOSAL);
 					}
 					else {
-						boolean acceptance = this.personality.acceptNegotiation(this.playerMap, a);
-						ACLMessage reply = MessageHandler.prepareReply(msg, null, null);
+						boolean acceptance = personality.acceptNegotiation(playerMap, a);
+						ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.ACCEPT_PROPOSAL, null);
 						if(acceptance)
 							reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
 						else
@@ -352,7 +352,7 @@ public class Player extends Agent
 			boolean[] retVal = {false};
 			playerMap.forEach((key, value)->{
 				if(a == key) {
-					if(value.team == UNKNOWN)
+					if(value.getTeam() == UNKNOWN)
 						retVal[0] = true;
 				}
 			});
