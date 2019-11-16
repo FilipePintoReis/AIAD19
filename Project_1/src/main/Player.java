@@ -21,6 +21,7 @@ import personality.*;
 @SuppressWarnings("serial")
 public class Player extends Agent
 {
+	private static final int UNKNOWN = -1;
 	private AID overseer;
 	private Personality personality = null;
 	private PlayerStruct myStruct;
@@ -295,13 +296,27 @@ public class Player extends Agent
 				{
 				case "duel":
 					System.out.println("Received duel from " + msg.getSender().getLocalName());
-					Integer duelTeam = Integer.parseInt(msg.getContent());
+					Integer duelTeam = Integer.parseInt(msg.getCContent());
 					Outcome outcome = Utilities.getOutcome(teamNumber, duelTeam);
 					replyOutcome(msg, outcome, teamNumber);
 					handleOutcome(outcome, msg.getSender(), duelTeam);
 					break;
 				case "negotiation":
 					System.out.println("Received negotiation from " + msg.getSender().getLocalName());
+					String proposed = msg.getContent();
+					AID a = new AID(proposed, AID.ISLOCALNAME);
+					if(hasInfo(a)){
+						MessageTemplate propose = MessageTemplate.MatchPerformative(ACLMessage.REJECT_PROPOSAL);
+					}
+					else {
+						boolean acceptance = this.personality.acceptNegotiation(this.playerMap, a);
+						ACLMessage reply = MessageHandler.prepareReply(msg, null, null);
+						if(acceptance)
+							reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+						else
+							reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
+						send(reply);
+					}
 					break;
 				case "share-map":
 					System.out.println("Received map from " + msg.getSender().getLocalName());
@@ -313,6 +328,8 @@ public class Player extends Agent
 						e.printStackTrace();
 						System.err.println("Couldn't retrieve player List from message.");
 					}
+					
+					
 					break;
 				}
 			}
@@ -330,6 +347,18 @@ public class Player extends Agent
 				}
 			}
 		}
+
+		public boolean hasInfo(AID a){
+			boolean[] retVal = {false};
+			playerMap.forEach((key, value)->{
+				if(a == key) {
+					if(value.team == UNKNOWN)
+						retVal[0] = true;
+				}
+			});
+			return retVal[0];
+		}
+
 
 		private void replyOutcome(ACLMessage msg, Outcome outcome, Integer teamNumber) {
 			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.ACCEPT_PROPOSAL, outcome.toString() + " " + teamNumber);

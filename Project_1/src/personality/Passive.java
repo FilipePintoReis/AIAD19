@@ -119,6 +119,14 @@ public class Passive implements Personality {
 					retVal[0] = key;
 				}
 			});
+
+			if(retVal[0] == null){
+			playerMap.forEach((key, value)->{
+				if(value.getTeam() != ownStruct.getTeam()) {
+					retVal[0] = key;
+				}
+			});
+		}
 		return retVal[0];
 	}
 }
