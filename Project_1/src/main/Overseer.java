@@ -223,5 +223,27 @@ public class Overseer extends Agent
 			}
 			send(msg);
 		}
+
+		private boolean gameEnd() {
+			Integer[] retVal = {null};
+			playerMap.forEach((key, value)->{
+			Integer team = value.getTeam;
+			if(team != 1)
+			playerMap.forEach((key, value)->{
+				if(value.getTeam() == team - 1 || value.getTeam() == team + 1) {
+					retVal[0]++;
+				}
+			});
+
+		else
+			playerMap.forEach((key, value)->{
+				if(value.getTeam() == 5) {
+					retVal[0]++;
+				}
+			});
+		}
+		if(retVal[0] != null)
+			return false;
+		return true;
 	}
 }
