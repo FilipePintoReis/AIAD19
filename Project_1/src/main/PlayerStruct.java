@@ -8,7 +8,7 @@ public class PlayerStruct {
 	}
 	
 	private AID myAID;
-	private Integer team;
+	private Integer team = null;
 	private State state; // 0 alive 1 is dead
 	private Integer group;
 	
@@ -33,6 +33,8 @@ public class PlayerStruct {
 	public boolean isAlive() { return state == State.ALIVE;	}
 	
 	public void setGroup(Integer group) { this.group = group; }
+
+	public void setTeam(int oppTeam) { this.team = oppTeam;	}
 }
 
 

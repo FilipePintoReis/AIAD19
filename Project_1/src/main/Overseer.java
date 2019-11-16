@@ -19,7 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @SuppressWarnings("serial")
 public class Overseer extends Agent
 {
-	public final int NUMBER_OF_TEAMS = 5;	
+	public final static int NUMBER_OF_TEAMS = 5;	
 
 	//Sum of *_PROB should be 1.0
 
@@ -101,7 +101,7 @@ public class Overseer extends Agent
 			int playerIndex = 0;
 
 			//Send each player their team Number
-			for(Integer i = 0; i < NUMBER_OF_TEAMS; i++)
+			for(Integer i = 1; i <= NUMBER_OF_TEAMS; i++)
 			{
 				ACLMessage informTeam = MessageHandler.prepareMessage(ACLMessage.INFORM, null, "team-number", i.toString());
 				for(int j = 0; j < players.length / NUMBER_OF_TEAMS; j++)
@@ -149,7 +149,7 @@ public class Overseer extends Agent
 		}
 
 	}
-	
+
 	private class GameLoop extends SimpleBehaviour {
 		private int playerStart = 0;
 		private int playerIndex = 0;
@@ -200,7 +200,6 @@ public class Overseer extends Agent
 			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
 			ACLMessage msg = receive(mt);
 			if (msg != null) {
-				System.out.println(msg.getContent());
 				switch(msg.getConversationId())
 				{
 				case "round-start": {
@@ -221,6 +220,7 @@ public class Overseer extends Agent
 
 		private void propagateDeath(String playerName) {
 			ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.PROPAGATE, null, "player-death", playerName);
+			System.out.println(playerName + " has shinderuded");
 			for(int i = 0; i < players.length; i++)
 			{
 				msg.addReceiver(players[i]);

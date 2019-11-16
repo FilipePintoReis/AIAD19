@@ -2,6 +2,8 @@ package main;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Map.Entry;
+
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.SequentialBehaviour;
@@ -24,7 +26,6 @@ public class Player extends Agent
 	private PlayerStruct myStruct;
 
 	public Integer teamNumber;
-	private int groupNumber = -1;
 
 	private HashMap<AID, PlayerStruct> playerMap = new HashMap<AID, PlayerStruct>();
 
@@ -33,12 +34,10 @@ public class Player extends Agent
 	{
 		registerOnDFD();
 		// TODO parseArguments();
-		
+
 		SequentialBehaviour playerBehaviour = new SequentialBehaviour(this);
 		playerBehaviour.addSubBehaviour(new TeamListener());
 		playerBehaviour.addSubBehaviour(new RoundListener());
-
-
 
 		addBehaviour(playerBehaviour);
 	}
@@ -123,8 +122,6 @@ public class Player extends Agent
 			else block();
 		}
 
-
-
 		private void turnPlayerArrayIntoMap(Serializable playerArray, HashMap<AID, PlayerStruct> playerMap) {
 			AID[] array = (AID[]) playerArray;
 			for(int i = 0; i < array.length; i++)
@@ -150,7 +147,6 @@ public class Player extends Agent
 
 	private class RoundListener extends SimpleBehaviour {
 		private int duelPhase;
-		private boolean roundDone;
 
 		@Override
 		public void action() {
@@ -165,8 +161,7 @@ public class Player extends Agent
 		}
 
 		private void roundAction() {
-			//TODO call action, probably has to do with personality7
-			roundDone = false;
+			System.out.println("TURN " + myAgent.getLocalName() + " of " + teamNumber);
 			if(myStruct.isAlive()) {
 				try {
 					Thread.sleep(1000);
@@ -179,16 +174,13 @@ public class Player extends Agent
 					AID opponent = personality.decideWhoToBattle(playerMap, myStruct);
 					duelPlayer(opponent);
 				}
-
-
-				System.out.println("JOB " + myAgent.getLocalName());
+				shareMapWithTeam();
 			}
 			else {
 				System.out.println("I am dead, let me sleep.");
 			}
 		}
 
-		//TODO how  to listen to messages without rest of program continue
 		private void duelPlayer(AID opponent) {
 			boolean duelDone = false;
 			while(duelPhase != 2) {
@@ -206,13 +198,51 @@ public class Player extends Agent
 					if(outcomeMessage != null)
 					{
 						System.out.println("Response from " + outcomeMessage.getSender().getLocalName());
-						Outcome outcome = Utilities.adjustOutcome(Outcome.valueOf(outcomeMessage.getContent()));
-						handleOutcome(outcome);
+						String[] msgArgs =  outcomeMessage.getContent().split("\\s+");
+						Outcome outcome = Utilities.adjustOutcome(Outcome.valueOf(msgArgs[0]));
+						handleOutcome(outcome, opponent ,Integer.parseInt(msgArgs[1]));
 						duelPhase = 2;
 					}
-					else block(); //TODO see if it doens frick up
+					else block();
 				}
 			}
+		}
+
+		private void shareMapWithTeam() {
+			AID[] teammates = getTeamArray();
+			HashMap<AID, Integer> shareMap = createShareMap();
+			ACLMessage msg = MessageHandler.prepareMessageObject(ACLMessage.PROPOSE, null, "share-map", shareMap);
+			for(int i = 0; i < teammates.length; i++)
+			{
+				msg.addReceiver(teammates[i]);
+			}
+			send(msg);
+		}
+
+		private HashMap<AID, Integer> createShareMap() {
+			HashMap<AID, Integer> shareMap = new HashMap<AID, Integer>();
+			for(HashMap.Entry<AID, PlayerStruct> entry: playerMap.entrySet())
+			{
+				if(entry.getValue().getTeam() != -1)
+				{
+					shareMap.put(entry.getKey(), entry.getValue().getTeam());
+				}
+			}
+			return shareMap;
+		}
+
+		private AID[] getTeamArray() {
+			AID[] teammates = new AID[playerMap.size()/Overseer.NUMBER_OF_TEAMS];
+			int i = 0;
+			for(HashMap.Entry<AID, PlayerStruct> entry: playerMap.entrySet())
+			{
+				if(entry.getValue().isAlive() && 
+						Outcome.SAME_TEAM == Utilities.getOutcome(myStruct.getTeam(), entry.getValue().getTeam()) && 
+						!entry.getKey().getLocalName().equals(myAgent.getAID().getLocalName()))
+					teammates[i] = entry.getKey();
+
+			}
+			return teammates;
 		}
 
 		private void sendEndRound(ACLMessage msg)
@@ -267,22 +297,43 @@ public class Player extends Agent
 					System.out.println("Received duel from " + msg.getSender().getLocalName());
 					Integer duelTeam = Integer.parseInt(msg.getContent());
 					Outcome outcome = Utilities.getOutcome(teamNumber, duelTeam);
-					replyOutcome(msg, outcome);
-					handleOutcome(outcome);
+					replyOutcome(msg, outcome, teamNumber);
+					handleOutcome(outcome, msg.getSender(), duelTeam);
 					break;
 				case "negotiation":
 					System.out.println("Received negotiation from " + msg.getSender().getLocalName());
 					break;
-				case "group":
-					System.out.println("Player " + msg.getSender().getLocalName() + " joined group.");
+				case "share-map":
+					System.out.println("Received map from " + msg.getSender().getLocalName());
+					try {
+
+						updateMap( msg.getContentObject());
+
+					} catch (UnreadableException e) {					
+						e.printStackTrace();
+						System.err.println("Couldn't retrieve player List from message.");
+					}
 					break;
 				}
 			}
 			else block();
 		}
 
-		private void replyOutcome(ACLMessage msg, Outcome outcome) {
-			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.ACCEPT_PROPOSAL, outcome.toString());
+		//TODO
+		private void updateMap(Serializable serializable) {
+			HashMap<AID, Integer> newMap = (HashMap<AID, Integer>) serializable;
+			for(Entry<AID, Integer> entry: newMap.entrySet())
+			{
+				if(entry.getValue() != -1)
+				{
+					playerMap.get(entry.getKey()).setTeam(entry.getValue());
+				}
+			}
+		}
+
+		private void replyOutcome(ACLMessage msg, Outcome outcome, Integer teamNumber) {
+			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.ACCEPT_PROPOSAL, outcome.toString() + " " + teamNumber);
+			System.out.println(reply.getContent());
 			send(reply);
 		}
 
@@ -294,9 +345,8 @@ public class Player extends Agent
 
 	}
 
-	private void handleOutcome(Outcome result)
+	private void handleOutcome(Outcome result, AID opponent, int oppTeam)
 	{
-		//TODO Implement various handles
 		switch(result)
 		{
 		case VICTORY:
@@ -311,12 +361,12 @@ public class Player extends Agent
 		}
 		case SAME_TEAM:
 		{
-			handleSameTeam();
+			handleSameTeam(opponent);
 			break;
 		}
 		case NEUTRAL:
 		{
-			handleNeutral();
+			handleNeutral(opponent, oppTeam);
 			break;
 		}
 		}
@@ -324,7 +374,7 @@ public class Player extends Agent
 
 	private void handleVictory()
 	{
-		//TODO	What to do on Victory
+		//Nothing to do
 	}
 
 	private void handleLoss()
@@ -333,14 +383,14 @@ public class Player extends Agent
 		send(msg);
 	}
 
-	private void handleSameTeam()
+	private void handleSameTeam(AID opponent)
 	{
-		//TODO	What to do if ally
+		playerMap.get(opponent).setTeam(teamNumber);
 	}
 
-	private void handleNeutral()
+	private void handleNeutral(AID opponent, int oppTeam)
 	{
-		//TODO	what else?
+		playerMap.get(opponent).setTeam(oppTeam);
 	}
 
 	protected void takeDown() {
