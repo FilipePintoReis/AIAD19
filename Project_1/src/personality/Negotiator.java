@@ -23,7 +23,13 @@ public class Negotiator implements Personality {
 				}
 			}
 		});
-		return false;
+		float probability = neutralPlayers[0]/knownPlayers[0] * knownPlayers[0]/playerMap.size();
+		boolean retval2 = probability >= 50 ? true: false;
+		if(retval2)
+			return duel;
+		else
+			return negotiate;
+		return doNothing;
 	}
 
 	@Override
@@ -91,11 +97,6 @@ public class Negotiator implements Personality {
 		}
 		
 		return null;
-	}
-
-	@Override
-	public boolean decideInitiateNegotiation(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
-		return true;
 	}
 	
 	@Override

@@ -13,7 +13,16 @@ public class Hunter implements Personality {
 	public boolean decideToBattle(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
 		int value = ThreadLocalRandom.current().nextInt(0,101);
 		boolean retval = value >= 10 ? true: false;
-		return retval;
+
+		int value2 = ThreadLocalRandom.current().nextInt(0,101);
+		boolean retval2 = value2 >= 50 ? true: false;
+
+		if(retval)
+			return duel;
+		else if (retval2)
+			return negotiate;
+
+		return doNothing;
 	}
 
 	@Override
@@ -82,13 +91,6 @@ public class Hunter implements Personality {
 		}
 
 		return null;
-	}
-
-	@Override
-	public boolean decideInitiateNegotiation(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
-		int value = ThreadLocalRandom.current().nextInt(0,101);
-		boolean retval = value >= 50 ? true: false;
-		return retval;
 	}
 
 	@Override

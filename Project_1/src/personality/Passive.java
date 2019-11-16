@@ -14,7 +14,12 @@ public class Passive implements Personality {
 	public boolean decideToBattle(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
 		int value = ThreadLocalRandom.current().nextInt(0,101);
 		boolean retval = value <= 10 ? true: false;
-		return retval;
+		boolean retval2 = value <= 30 ? true: false;
+		if(retval)
+			return duel
+		else if(retval2)
+			return negotiate
+		return doNothing;
 	}
 
 	@Override
@@ -82,11 +87,6 @@ public class Passive implements Personality {
 		}
 
 		return null;
-	}
-
-	@Override
-	public boolean decideInitiateNegotiation(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
-		return true;
 	}
 
 	@Override
