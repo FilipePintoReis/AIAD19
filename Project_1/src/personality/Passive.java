@@ -102,6 +102,54 @@ public class Passive implements Personality {
 		return retVal[0];
 	}
 
+
+		@Override
+	public AID decideWhoToNegotiate(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
+		ArrayList<ArrayList<AID>> neutralTeam = new ArrayList<ArrayList<AID>>(); 
+		ArrayList<ArrayList<AID>> iKillTeam = new ArrayList<ArrayList<AID>>();  
+		ArrayList<ArrayList<AID>> idkTeam = new ArrayList<ArrayList<AID>>();
+		idkTeam.add(new ArrayList<AID>());
+		neutralTeam.add(new ArrayList<AID>());
+		iKillTeam.add(new ArrayList<AID>());
+
+		playerMap.forEach((key, value)->{
+			if(!value.isAlive())
+			{
+			}
+			else if(value.getTeam() == UNKNOWN ) {
+				ArrayList<AID> a = idkTeam.get(0);
+				a.add(key);
+			}
+			else {
+				switch(Utilities.getOutcome(ownStruct.getTeam(), value.getTeam()))
+				{
+				case VICTORY:
+				{
+					iKillTeam.get(0).add(key);
+					break;
+				}
+				case NEUTRAL:
+				{
+					neutralTeam.get(0).add(key);
+					break;
+				}
+				}
+			}
+		});
+
+		if(!iKillTeam.get(0).isEmpty()) {
+			return iKillTeam.get(0).get(0);
+		}
+		else if(!neutralTeam.get(0).isEmpty()) {
+			return neutralTeam.get(0).get(0);
+		}
+		else if(!idkTeam.get(0).isEmpty()) {
+			return idkTeam.get(0).get(0);
+		}
+
+		return null;
+	}
+
 	@Override
 	public AID decideWhatToNegotiate(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
 
