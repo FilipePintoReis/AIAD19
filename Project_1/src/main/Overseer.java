@@ -1,5 +1,7 @@
 package main;
 
+import java.util.HashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -11,10 +13,6 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("serial")
 public class Overseer extends Agent
@@ -48,8 +46,6 @@ public class Overseer extends Agent
 	private AID[] players;
 
 	private boolean inRound = false;
-
-	private ArrayList<Integer> personalityDistribution;
 
 	public void setup()
 	{

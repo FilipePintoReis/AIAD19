@@ -9,9 +9,9 @@ import main.Utilities.Outcome;
 
 public class Negotiator implements Personality {
 	private static final int UNKNOWN = -1;
-	
+
 	@Override
-	public boolean decideToBattle(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
+	public Action decideAction(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
 		Integer[] knownPlayers = {0};
 		Integer[] neutralPlayers = {0};
 		playerMap.forEach((key, value)->{
@@ -26,10 +26,9 @@ public class Negotiator implements Personality {
 		float probability = neutralPlayers[0]/knownPlayers[0] * knownPlayers[0]/playerMap.size();
 		boolean retval2 = probability >= 50 ? true: false;
 		if(retval2)
-			return duel;
+			return Action.Duel;
 		else
-			return negotiate;
-		return doNothing;
+			return Action.Negotiate;
 	}
 
 	@Override
@@ -79,7 +78,7 @@ public class Negotiator implements Personality {
 				}
 			}
 		});
-		
+
 		if(!myTeam.get(0).isEmpty()) {
 			return myTeam.get(0).get(0);
 		}
@@ -95,26 +94,26 @@ public class Negotiator implements Personality {
 		else if(!killsMeTeam.get(0).isEmpty()) {
 			return myTeam.get(0).get(0);
 		}
-		
+
 		return null;
 	}
-	
+
 	@Override
 	public boolean acceptNegotiation(HashMap<AID, PlayerStruct> playerMap, AID proposedPlayer) {
 		boolean[] retVal = {false};
-		
+
 		playerMap.forEach((key, value)->{
 			if(key == proposedPlayer && value.getTeam() == UNKNOWN) {
 				retVal[0] = true;
 			}
 		});
-		
+
 		return retVal[0];
 	}
-	
+
 	@Override
 	public AID decideWhatToNegotiate(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
-		
+
 		AID[] retVal = {null};
 		if(ownStruct.getTeam() != 1)
 			playerMap.forEach((key, value)->{
@@ -122,7 +121,7 @@ public class Negotiator implements Personality {
 					retVal[0] = key;
 				}
 			});
-		
+
 		else
 			playerMap.forEach((key, value)->{
 				if(value.getTeam() == 5) {
@@ -130,7 +129,7 @@ public class Negotiator implements Personality {
 				}
 			});
 
-			if(retVal[0] == null){
+		if(retVal[0] == null){
 			playerMap.forEach((key, value)->{
 				if(value.getTeam() != ownStruct.getTeam()) {
 					retVal[0] = key;

@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
 import jade.domain.DFService;
@@ -34,25 +35,12 @@ public class Player extends Agent
 	public void setup()
 	{
 		registerOnDFD();
-		// TODO parseArguments();
 
 		SequentialBehaviour playerBehaviour = new SequentialBehaviour(this);
 		playerBehaviour.addSubBehaviour(new TeamListener());
 		playerBehaviour.addSubBehaviour(new RoundListener());
 
 		addBehaviour(playerBehaviour);
-	}
-
-	private void parseArguments()
-	{
-		Object[] args = getArguments();
-		Integer personalityValue = Integer.parseInt(args[0].toString());
-		switch(personalityValue)
-		{
-		case 1: personality = new Hunter(); break;
-		case 2: personality = new Negotiator(); break;
-		default: personality = new Passive();
-		}
 	}
 
 	private void registerOnDFD() {
@@ -127,7 +115,7 @@ public class Player extends Agent
 			AID[] array = (AID[]) playerArray;
 			for(int i = 0; i < array.length; i++)
 			{
-				playerMap.put(array[i], new PlayerStruct(array[i], -1));
+				playerMap.put(array[i], new PlayerStruct(array[i], UNKNOWN));
 			}
 			myStruct = new PlayerStruct(this.myAgent.getAID(), teamNumber);
 			playerMap.put(myAgent.getAID(), myStruct);
@@ -146,7 +134,7 @@ public class Player extends Agent
 		}
 	}
 
-	private class RoundListener extends SimpleBehaviour {
+	private class RoundListener extends CyclicBehaviour {
 		private int duelPhase;
 
 		@Override
@@ -169,11 +157,20 @@ public class Player extends Agent
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				if(personality.decideToBattle(playerMap, myStruct))
+
+				switch(personality.decideAction(playerMap, myStruct))
 				{
+				case Duel:
 					duelPhase = 0;
 					AID opponent = personality.decideWhoToBattle(playerMap, myStruct);
 					duelPlayer(opponent);
+					break;
+				case Negotiate:
+					AID a = personality.decideWhatToNegotiate(playerMap, myStruct);
+					negotiate();
+					break;
+				case Abstain:
+				default:
 				}
 				shareMapWithTeam();
 			}
@@ -183,7 +180,6 @@ public class Player extends Agent
 		}
 
 		private void duelPlayer(AID opponent) {
-			boolean duelDone = false;
 			while(duelPhase != 2) {
 				switch(duelPhase)
 				{
@@ -224,7 +220,7 @@ public class Player extends Agent
 			HashMap<AID, Integer> shareMap = new HashMap<AID, Integer>();
 			for(HashMap.Entry<AID, PlayerStruct> entry: playerMap.entrySet())
 			{
-				if(entry.getValue().getTeam() != -1)
+				if(entry.getValue().getTeam() != UNKNOWN)
 				{
 					shareMap.put(entry.getKey(), entry.getValue().getTeam());
 				}
@@ -250,12 +246,6 @@ public class Player extends Agent
 		{
 			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.INFORM, "DONE");
 			send(reply);
-		}
-
-		@Override
-		public boolean done() {
-			// TODO stop listening to rounds probably on death
-			return false;
 		}
 	}
 
@@ -328,8 +318,8 @@ public class Player extends Agent
 						e.printStackTrace();
 						System.err.println("Couldn't retrieve player List from message.");
 					}
-					
-					
+
+
 					break;
 				}
 			}
@@ -338,10 +328,11 @@ public class Player extends Agent
 
 		//TODO
 		private void updateMap(Serializable serializable) {
+			@SuppressWarnings("unchecked")
 			HashMap<AID, Integer> newMap = (HashMap<AID, Integer>) serializable;
 			for(Entry<AID, Integer> entry: newMap.entrySet())
 			{
-				if(entry.getValue() != -1)
+				if(entry.getValue() != UNKNOWN)
 				{
 					playerMap.get(entry.getKey()).setTeam(entry.getValue());
 				}

@@ -10,7 +10,7 @@ public class Hunter implements Personality {
 	private static final int UNKNOWN = -1;
 
 	@Override
-	public boolean decideToBattle(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
+	public Action decideAction(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
 		int value = ThreadLocalRandom.current().nextInt(0,101);
 		boolean retval = value >= 10 ? true: false;
 
@@ -18,11 +18,10 @@ public class Hunter implements Personality {
 		boolean retval2 = value2 >= 50 ? true: false;
 
 		if(retval)
-			return duel;
+			return Action.Duel;
 		else if (retval2)
-			return negotiate;
-
-		return doNothing;
+			return Action.Negotiate;
+		return Action.Abstain;
 	}
 
 	@Override
