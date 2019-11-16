@@ -13,11 +13,13 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import main.Utilities.Outcome;
 
 @SuppressWarnings("serial")
 public class Overseer extends Agent
 {
 	public final static int NUMBER_OF_TEAMS = 5;	
+	private final int ROUND_SLEEP = 50;
 
 	//Sum of *_PROB should be 1.0
 
@@ -153,15 +155,19 @@ public class Overseer extends Agent
 
 		@Override
 		public void action() {
-			if (!inRound)
-				roundStart();
-			else {
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+			if(!gameEnd()) {
+				if (!inRound)
+					roundStart();
+				else {
+					try {
+						Thread.sleep(ROUND_SLEEP);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
 			}
+			else
+				stopGame();
 		}
 
 		private void roundStart()
@@ -216,34 +222,59 @@ public class Overseer extends Agent
 
 		private void propagateDeath(String playerName) {
 			ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.PROPAGATE, null, "player-death", playerName);
-			System.out.println(playerName + " has shinderuded");
+			System.out.println("DEATH " + playerName);
 			for(int i = 0; i < players.length; i++)
 			{
 				msg.addReceiver(players[i]);
 			}
 			send(msg);
 		}
+	}
 
-		private boolean gameEnd() {
-			Integer[] retVal = {null};
-			playerMap.forEach((key, value)->{
-			Integer team = value.getTeam;
-			if(team != 1)
-			playerMap.forEach((key, value)->{
-				if(value.getTeam() == team - 1 || value.getTeam() == team + 1) {
-					retVal[0]++;
-				}
-			});
+	private boolean gameEnd() {
+		boolean retVal = true;
 
-		else
-			playerMap.forEach((key, value)->{
-				if(value.getTeam() == 5) {
-					retVal[0]++;
+		for(HashMap.Entry<AID, PlayerStruct> entryI: playerMap.entrySet())
+		{
+			Integer teamI = entryI.getValue().getTeam();
+			if(entryI.getValue().isAlive()) {
+				for(HashMap.Entry<AID, PlayerStruct> entryJ: playerMap.entrySet())
+				{
+					if(entryJ.getValue().isAlive())
+						if(Utilities.getOutcome(entryJ.getValue().getTeam(), teamI) == Outcome.LOSS)
+							retVal = false;
 				}
-			});
+			}
 		}
-		if(retVal[0] != null)
-			return false;
-		return true;
+		return retVal;
+	}
+
+	private void stopGame()
+	{
+		sendTerminateMsg();
+
+		int[] teamSurvivors = {0, 0, 0, 0, 0};
+		for(HashMap.Entry<AID, PlayerStruct> entryJ: playerMap.entrySet())
+		{
+			if(entryJ.getValue().isAlive())
+			{
+				teamSurvivors[entryJ.getValue().getTeam() - 1]++;
+			}
+		}
+		System.out.println("\n\n\nFINAL HEADCOUNT:");
+		for(int i = 0; i < teamSurvivors.length; i++)
+		{
+			System.out.println((i + 1) + ": " + teamSurvivors[i]);
+		}
+	}
+
+	private void sendTerminateMsg() {
+		ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.PROPAGATE, null, "terminate", null);
+		for(int i = 0; i < players.length; i++)
+		{
+			msg.addReceiver(players[i]);
+		}
+		send(msg);
+		doDelete();
 	}
 }

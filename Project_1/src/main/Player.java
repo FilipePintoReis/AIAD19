@@ -22,6 +22,8 @@ import personality.*;
 @SuppressWarnings("serial")
 public class Player extends Agent
 {
+	private int ROUND_SLEEP = 50;
+
 	private static final int UNKNOWN = -1;
 	private AID overseer;
 	private Personality personality = null;
@@ -135,7 +137,7 @@ public class Player extends Agent
 	}
 
 	private class RoundListener extends CyclicBehaviour {
-		private int duelPhase;
+		private int actionPhase;
 
 		@Override
 		public void action() {
@@ -153,7 +155,7 @@ public class Player extends Agent
 			System.out.println("TURN " + myAgent.getLocalName() + " of " + teamNumber);
 			if(myStruct.isAlive()) {
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(ROUND_SLEEP);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -161,13 +163,18 @@ public class Player extends Agent
 				switch(personality.decideAction(playerMap, myStruct))
 				{
 				case Duel:
-					duelPhase = 0;
+					actionPhase = 0;
 					AID opponent = personality.decideWhoToBattle(playerMap, myStruct);
-					duelPlayer(opponent);
+					if(opponent != null) {
+						duelPlayer(opponent);
+					}
+					else System.out.println("SKIP");
 					break;
 				case Negotiate:
-					AID a = personality.decideWhatToNegotiate(playerMap, myStruct);
-					negotiate();
+					actionPhase = 0;
+					AID item = personality.decideWhatToNegotiate(playerMap, myStruct);
+					AID client = personality.decideWhoToNegotiate(playerMap, myStruct);
+					negotiate(client, item);
 					break;
 				case Abstain:
 				default:
@@ -175,30 +182,80 @@ public class Player extends Agent
 				shareMapWithTeam();
 			}
 			else {
-				System.out.println("I am dead, let me sleep.");
+				//				System.out.println("SLEEP " + myAgent.getLocalName());
+			}
+		}
+
+		private void negotiate(AID client, AID item) {
+			while(actionPhase != 2)
+			{
+				switch(actionPhase)
+				{
+				case 0:
+					ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.PROPOSE, client, "negotiation", item.getLocalName());
+					System.out.println("PROPOSE 1: " + item.getLocalName());
+					send(msg);
+					actionPhase = 1;
+					break;
+				case 1:
+					MessageTemplate mt = MessageTemplate.MatchSender(client);
+					ACLMessage response = receive(mt);
+					if(response != null)
+					{
+						switch(response.getPerformative())
+						{
+						case ACLMessage.ACCEPT_PROPOSAL:
+						{
+							String[] args = response.getContent().split("//s+");
+							AID clientProposal = new AID(args[0], AID.ISLOCALNAME);
+							if(personality.acceptNegotiation(playerMap, clientProposal))
+							{
+								Integer clientProposalTeam = Integer.parseInt(args[1]);
+								playerMap.get(clientProposal).setTeam(clientProposalTeam);
+
+								Integer itemTeam = playerMap.get(item).getTeam();
+								ACLMessage reply = MessageHandler.prepareReply(response, ACLMessage.ACCEPT_PROPOSAL, itemTeam.toString());
+								send(reply);							
+							}
+							else
+							{
+								ACLMessage reply = MessageHandler.prepareReply(response, ACLMessage.REJECT_PROPOSAL, null);
+								send(reply);	
+							}
+							break;
+						}
+						case ACLMessage.REJECT_PROPOSAL:
+						{
+							actionPhase = 2;
+							break;
+						}
+						}
+					}
+					else block();
+				}
 			}
 		}
 
 		private void duelPlayer(AID opponent) {
-			while(duelPhase != 2) {
-				switch(duelPhase)
+			while(actionPhase != 2) {
+				switch(actionPhase)
 				{
 				case 0:
-					System.out.println("Challenge " + opponent.getLocalName());
+					System.out.println("CHALLENGE " + opponent.getLocalName());
 					ACLMessage challengeMsg = MessageHandler.prepareMessage(ACLMessage.PROPOSE, opponent, "duel", teamNumber.toString());
 					send(challengeMsg);
-					duelPhase = 1;
+					actionPhase = 1;
 					break;
 				case 1:
 					MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
 					ACLMessage outcomeMessage = receive(mt);
 					if(outcomeMessage != null)
 					{
-						System.out.println("Response from " + outcomeMessage.getSender().getLocalName());
 						String[] msgArgs =  outcomeMessage.getContent().split("\\s+");
 						Outcome outcome = Utilities.adjustOutcome(Outcome.valueOf(msgArgs[0]));
+						System.out.println("OUTCOME " + outcome);
 						handleOutcome(outcome, opponent ,Integer.parseInt(msgArgs[1]));
-						duelPhase = 2;
+						actionPhase = 2;
 					}
 					else block();
 				}
@@ -247,6 +304,8 @@ public class Player extends Agent
 			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.INFORM, "DONE");
 			send(reply);
 		}
+
+
 	}
 
 	private class DeathListener extends SimpleBehaviour {
@@ -259,11 +318,12 @@ public class Player extends Agent
 			{
 				switch(msg.getConversationId())
 				{
-				case "player-death":{
+				case "player-death":
 					AID deadPlayer = new AID(msg.getContent(), AID.ISLOCALNAME);
 					playerMap.get(deadPlayer).turnDead();
 					break;
-				}
+				case "terminate":
+					myAgent.doDelete();
 				}
 			}
 			else block();
@@ -285,31 +345,29 @@ public class Player extends Agent
 				switch(msg.getConversationId())
 				{
 				case "duel":
-					System.out.println("Received duel from " + msg.getSender().getLocalName());
 					Integer duelTeam = Integer.parseInt(msg.getContent());
 					Outcome outcome = Utilities.getOutcome(teamNumber, duelTeam);
 					replyOutcome(msg, outcome, teamNumber);
 					handleOutcome(outcome, msg.getSender(), duelTeam);
 					break;
 				case "negotiation":
-					System.out.println("Received negotiation from " + msg.getSender().getLocalName());
 					String proposed = msg.getContent();
-					AID a = new AID(proposed, AID.ISLOCALNAME);
-					if(hasInfo(a)){
-						MessageTemplate propose = MessageTemplate.MatchPerformative(ACLMessage.REJECT_PROPOSAL);
+					AID proposedItem = new AID(proposed, AID.ISLOCALNAME);
+					ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.REJECT_PROPOSAL, null);
+					if(!hasInfo(proposedItem) && personality.acceptNegotiation(playerMap, proposedItem)) {
+						reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+						AID item = personality.decideWhatToNegotiate(playerMap, myStruct);
+						Integer itemTeam = playerMap.get(item).getTeam();
+						reply.setContent(item.getLocalName() + " " + itemTeam.toString());
+						System.out.println("PROPOSE 2: " + item.getLocalName());
+						send(reply);
+						awaitProposerResponse(msg.getSender(), proposedItem);
 					}
 					else {
-						boolean acceptance = personality.acceptNegotiation(playerMap, a);
-						ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.ACCEPT_PROPOSAL, null);
-						if(acceptance)
-							reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-						else
-							reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
 						send(reply);
 					}
 					break;
 				case "share-map":
-					System.out.println("Received map from " + msg.getSender().getLocalName());
 					try {
 
 						updateMap( msg.getContentObject());
@@ -318,15 +376,34 @@ public class Player extends Agent
 						e.printStackTrace();
 						System.err.println("Couldn't retrieve player List from message.");
 					}
-
-
 					break;
 				}
 			}
 			else block();
 		}
 
-		//TODO
+		private void awaitProposerResponse(AID proposer, AID proposedItem) {
+			ACLMessage response;
+			do {
+				MessageTemplate mt = MessageTemplate.MatchSender(proposer);
+				response = receive(mt);
+				if(response != null)
+				{
+					switch(response.getPerformative())
+					{
+					case ACLMessage.ACCEPT_PROPOSAL:
+						Integer proposedItemTeam = Integer.parseInt(response.getContent());
+						playerMap.get(proposedItem).setTeam(proposedItemTeam);
+						break;
+					case ACLMessage.REJECT_PROPOSAL:
+						break;
+					}
+				}
+				else block();
+			}
+			while(response != null);
+		}
+
 		private void updateMap(Serializable serializable) {
 			@SuppressWarnings("unchecked")
 			HashMap<AID, Integer> newMap = (HashMap<AID, Integer>) serializable;
@@ -353,7 +430,6 @@ public class Player extends Agent
 
 		private void replyOutcome(ACLMessage msg, Outcome outcome, Integer teamNumber) {
 			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.ACCEPT_PROPOSAL, outcome.toString() + " " + teamNumber);
-			System.out.println(reply.getContent());
 			send(reply);
 		}
 

@@ -79,12 +79,6 @@ public class Hunter implements Personality {
 		else if(!idkTeam.get(0).isEmpty()) {
 			return idkTeam.get(0).get(0);
 		}
-		else if(!myTeam.get(0).isEmpty()) {
-			return myTeam.get(0).get(0);
-		}
-		else if(!neutralTeam.get(0).isEmpty()) {
-			return neutralTeam.get(0).get(0);
-		}
 		else if(!killsMeTeam.get(0).isEmpty()) {
 			return killsMeTeam.get(0).get(0);
 		}
