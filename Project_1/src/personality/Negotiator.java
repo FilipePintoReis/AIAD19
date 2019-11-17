@@ -78,21 +78,14 @@ public class Negotiator implements Personality {
 				}
 			}
 		});
-
-		if(!myTeam.get(0).isEmpty()) {
-			return myTeam.get(0).get(0);
-		}
-		else if(!neutralTeam.get(0).isEmpty()) {
-			return myTeam.get(0).get(0);
-		}
-		else if(!iKillTeam.get(0).isEmpty()) {
-			return myTeam.get(0).get(0);
+		if(!iKillTeam.get(0).isEmpty()) {
+			return iKillTeam.get(0).get(0);
 		}
 		else if(!idkTeam.get(0).isEmpty()) {
-			return myTeam.get(0).get(0);
+			return idkTeam.get(0).get(0);
 		}
 		else if(!killsMeTeam.get(0).isEmpty()) {
-			return myTeam.get(0).get(0);
+			return killsMeTeam.get(0).get(0);
 		}
 
 		return null;
@@ -100,18 +93,10 @@ public class Negotiator implements Personality {
 
 	@Override
 	public boolean acceptNegotiation(HashMap<AID, PlayerStruct> playerMap, AID proposedPlayer) {
-		boolean[] retVal = {false};
-
-		playerMap.forEach((key, value)->{
-			if(key == proposedPlayer && value.getTeam() == UNKNOWN) {
-				retVal[0] = true;
-			}
-		});
-
-		return retVal[0];
+		return playerMap.get(proposedPlayer).getTeam() == UNKNOWN;
 	}
 
-		@Override
+	@Override
 	public AID decideWhoToNegotiate(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
 		ArrayList<ArrayList<AID>> neutralTeam = new ArrayList<ArrayList<AID>>(); 
 		ArrayList<ArrayList<AID>> iKillTeam = new ArrayList<ArrayList<AID>>();  

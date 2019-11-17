@@ -11,10 +11,10 @@ public class Hunter implements Personality {
 
 	@Override
 	public Action decideAction(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
-		int value = ThreadLocalRandom.current().nextInt(0,101);
+		int value = ThreadLocalRandom.current().nextInt(0,100);
 		boolean retval = value >= 10 ? true: false;
 
-		int value2 = ThreadLocalRandom.current().nextInt(0,101);
+		int value2 = ThreadLocalRandom.current().nextInt(0,100);
 		boolean retval2 = value2 >= 50 ? true: false;
 
 		if(retval)
@@ -88,15 +88,7 @@ public class Hunter implements Personality {
 
 	@Override
 	public boolean acceptNegotiation(HashMap<AID, PlayerStruct> playerMap, AID proposedPlayer) {
-		boolean[] retVal = {false};
-
-		playerMap.forEach((key, value)->{
-			if(key == proposedPlayer && value.getTeam() == UNKNOWN) {
-				retVal[0] = true;
-			}
-		});
-
-		return retVal[0];
+		return playerMap.get(proposedPlayer).getTeam() == UNKNOWN;
 	}
 
 	@Override

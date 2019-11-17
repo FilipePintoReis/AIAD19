@@ -25,19 +25,19 @@ public class Overseer extends Agent
 
 	private float team_personality_prob[][] = {
 			{
-				0, 0, 100
+				20, 40, 50
 			},
 			{
-				0, 0, 100
+				20, 40, 50
 			},
 			{
-				0, 0, 100
+				20, 40, 50
 			},
 			{
-				0, 0, 100
+				20, 40, 50
 			},
 			{
-				0, 0, 100
+				20, 40, 50
 			}
 	};
 
