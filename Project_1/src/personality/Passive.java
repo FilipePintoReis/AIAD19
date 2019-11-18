@@ -85,8 +85,8 @@ public class Passive implements Personality {
 
 	@Override
 	public boolean acceptNegotiation(HashMap<String, PlayerStruct> playerMap, String proposedPlayer) {
-		PlayerStruct a = playerMap.get(proposedPlayer);
-		return a.getTeam() == UNKNOWN;
+		int a = ThreadLocalRandom.current().nextInt(0, 100);
+		return a > 30;
 	}
 
 	@Override
