@@ -214,6 +214,7 @@ public class Overseer extends Agent
 				case "inform-death": {
 					playerMap.get(msg.getSender().getLocalName()).turnDead();
 					propagateDeath(msg.getContent());
+					break;
 				}
 				}
 			}

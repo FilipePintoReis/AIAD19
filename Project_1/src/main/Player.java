@@ -234,6 +234,7 @@ public class Player extends Agent
 						}
 					}
 					else block();
+					break;
 				}
 			}
 		}
@@ -276,6 +277,7 @@ public class Player extends Agent
 						actionPhase = 2;
 					}
 					else block();
+					break;
 				}
 			}
 		}
@@ -344,6 +346,7 @@ public class Player extends Agent
 					break;
 				case "terminate":
 					myAgent.doDelete();
+					break;
 				}
 			}
 			else block();
