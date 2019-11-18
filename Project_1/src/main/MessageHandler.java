@@ -5,11 +5,11 @@ import java.io.Serializable;
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
 
-public class MessageHandler {
-	protected static ACLMessage prepareMessage(int performative, AID receiver, String conversationId, String content)
+class MessageHandler {
+	protected static ACLMessage prepareMessage(int performative, String receiver, String conversationId, String content)
 	{
 		ACLMessage msg = new ACLMessage(performative);
-		msg.addReceiver(receiver);
+		addReceiver(msg, receiver);
 		msg.setConversationId(conversationId);
 		msg.setContent(content);
 		return msg;
@@ -23,10 +23,10 @@ public class MessageHandler {
 		return reply;
 	}
 
-	protected static ACLMessage prepareMessageObject(int performative, AID receiver, String conversationId, Serializable obj)
+	protected static ACLMessage prepareMessageObject(int performative, String receiver, String conversationId, Serializable obj)
 	{
 		ACLMessage msg = new ACLMessage(performative);
-		msg.addReceiver(receiver);
+		addReceiver(msg, receiver);
 		msg.setConversationId(conversationId);
 		try {
 			msg.setContentObject(obj);
@@ -35,5 +35,11 @@ public class MessageHandler {
 			System.err.println("Caught error in function prepareMessageObject.");
 		}
 		return msg;
+	}
+
+	protected static void addReceiver(ACLMessage msg, String receiverName)
+	{
+		if(msg != null && receiverName != null)
+			msg.addReceiver(new AID(receiverName, AID.ISLOCALNAME));
 	}
 }

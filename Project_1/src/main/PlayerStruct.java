@@ -1,5 +1,4 @@
 package main;
-import jade.core.AID;
 
 public class PlayerStruct {
 	public enum State {
@@ -7,20 +6,18 @@ public class PlayerStruct {
 		DEAD
 	}
 	
-	private AID myAID;
+	private String name;
 	private Integer team = null;
 	private State state; // 0 alive 1 is dead
 	private Integer group;
 	
-	PlayerStruct(AID aid, Integer team){
-		this.myAID = aid;
+	PlayerStruct(String name, Integer team){
+		this.name = name;
 		this.team = team;
 		this.state = State.ALIVE;
 	}
 	
-	public AID getAID() { return this.myAID; }
-	
-	public void setAID(AID aid) { this.myAID = aid;}
+	public String getName() { return this.name; }
 	
 	public Integer getTeam() { return this.team;}
 	

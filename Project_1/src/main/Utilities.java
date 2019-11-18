@@ -1,5 +1,6 @@
 package main;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class Utilities {
@@ -11,9 +12,21 @@ public class Utilities {
 		SAME_TEAM,
 		NEUTRAL
 	}
-	
+
 	public static Outcome getOutcome(Integer teamA, Integer teamB)
 	{
+		try {
+			if(teamA == -1 || teamB == -1) {
+
+				System.err.println("INVALID");
+				throw new IOException();
+			}
+		}catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+
+
 		if(killsTheEnemy(teamA, teamB))
 		{
 			return Outcome.VICTORY;
@@ -38,7 +51,7 @@ public class Utilities {
 		default: return outcome;
 		}
 	}
-	
+
 	private static boolean diesHorribly(Integer teamNumber, Integer comparisonN) {
 		return getPrey(comparisonN) == teamNumber;
 	}
@@ -57,7 +70,7 @@ public class Utilities {
 		else
 			return teamNumber + 1;
 	}
-	
+
 	public static ArrayList<Integer> personalityDistribution(float passiveP, float negotiatorP, float hunterP, Integer teamSize) {
 		Integer pN = (int) (teamSize*passiveP);
 		Integer nN = (int) (teamSize*negotiatorP);

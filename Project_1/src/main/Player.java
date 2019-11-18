@@ -22,16 +22,15 @@ import personality.*;
 @SuppressWarnings("serial")
 public class Player extends Agent
 {
-	private int ROUND_SLEEP = 50;
+	private int ROUND_SLEEP = 100;
 
 	private static final int UNKNOWN = -1;
-	private AID overseer;
 	private Personality personality = null;
 	private PlayerStruct myStruct;
 
 	public Integer teamNumber;
 
-	private HashMap<AID, PlayerStruct> playerMap = new HashMap<AID, PlayerStruct>();
+	private HashMap<String, PlayerStruct> playerMap = new HashMap<String, PlayerStruct>();
 
 	@Override
 	public void setup()
@@ -72,7 +71,6 @@ public class Player extends Agent
 			ACLMessage msg = receive(mt);
 			if(msg != null)
 			{
-				overseer = msg.getSender();
 				switch(msg.getConversationId()) {
 				case "team-number":
 					if(!hasTeam) {
@@ -113,14 +111,14 @@ public class Player extends Agent
 			else block();
 		}
 
-		private void turnPlayerArrayIntoMap(Serializable playerArray, HashMap<AID, PlayerStruct> playerMap) {
-			AID[] array = (AID[]) playerArray;
+		private void turnPlayerArrayIntoMap(Serializable playerArray, HashMap<String, PlayerStruct> playerMap) {
+			String[] array = (String[]) playerArray;
 			for(int i = 0; i < array.length; i++)
 			{
 				playerMap.put(array[i], new PlayerStruct(array[i], UNKNOWN));
 			}
-			myStruct = new PlayerStruct(this.myAgent.getAID(), teamNumber);
-			playerMap.put(myAgent.getAID(), myStruct);
+			myStruct = new PlayerStruct(this.myAgent.getLocalName(), teamNumber);
+			playerMap.put(myAgent.getLocalName(), myStruct);
 		}
 
 		@Override
@@ -138,13 +136,13 @@ public class Player extends Agent
 
 	private class RoundListener extends CyclicBehaviour {
 		private int actionPhase;
-
+		private boolean inRound;
 		@Override
 		public void action() {
 			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
 			ACLMessage msg = receive(mt);
 			if( msg != null && msg.getConversationId().equals("round-start")) {
-				int roundNumber = Integer.parseInt(msg.getContent());
+				inRound = true;
 				roundAction();
 				sendEndRound(msg);
 			}
@@ -152,8 +150,8 @@ public class Player extends Agent
 		}
 
 		private void roundAction() {
-			System.out.println("TURN " + myAgent.getLocalName() + " of " + teamNumber);
 			if(myStruct.isAlive()) {
+				System.out.println("\nTURN " + myAgent.getLocalName() + " of " + teamNumber);
 				try {
 					Thread.sleep(ROUND_SLEEP);
 				} catch (InterruptedException e) {
@@ -164,7 +162,7 @@ public class Player extends Agent
 				{
 				case Duel:
 					actionPhase = 0;
-					AID opponent = personality.decideWhoToBattle(playerMap, myStruct);
+					String opponent = personality.decideWhoToBattle(playerMap, myStruct);
 					if(opponent != null) {
 						duelPlayer(opponent);
 					}
@@ -172,11 +170,13 @@ public class Player extends Agent
 					break;
 				case Negotiate:
 					actionPhase = 0;
-					AID item = personality.decideWhatToNegotiate(playerMap, myStruct);
-					AID client = personality.decideWhoToNegotiate(playerMap, myStruct);
-					negotiate(client, item);
+					String item = personality.decideWhatToNegotiate(playerMap, myStruct);
+					String client = personality.decideWhoToNegotiate(playerMap, myStruct);
+					if(item != null && client != null)
+						negotiate(client, item);
 					break;
 				case Abstain:
+					System.out.println("ABSTAIN");
 				default:
 				}
 				shareMapWithTeam();
@@ -186,19 +186,19 @@ public class Player extends Agent
 			}
 		}
 
-		private void negotiate(AID client, AID item) {
+		private void negotiate(String client, String item) {
 			while(actionPhase != 2)
 			{
 				switch(actionPhase)
 				{
 				case 0:
-					ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.PROPOSE, client, "negotiation", item.getLocalName());
-					System.out.println("PROPOSE 1: " + item.getLocalName());
+					ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.PROPOSE, client, "negotiation", item);
+					System.out.println("PROPOSE 1: " + item);
 					send(msg);
 					actionPhase = 1;
 					break;
 				case 1:
-					MessageTemplate mt = MessageTemplate.MatchSender(client);
+					MessageTemplate mt = MessageTemplate.MatchSender(new AID(client, AID.ISLOCALNAME));
 					ACLMessage response = receive(mt);
 					if(response != null)
 					{
@@ -206,8 +206,8 @@ public class Player extends Agent
 						{
 						case ACLMessage.ACCEPT_PROPOSAL:
 						{
-							String[] args = response.getContent().split("//s+");
-							AID clientProposal = new AID(args[0], AID.ISLOCALNAME);
+							String[] args = response.getContent().split(":");
+							String clientProposal = args[0];
 							if(personality.acceptNegotiation(playerMap, clientProposal))
 							{
 								Integer clientProposalTeam = Integer.parseInt(args[1]);
@@ -215,12 +215,14 @@ public class Player extends Agent
 
 								Integer itemTeam = playerMap.get(item).getTeam();
 								ACLMessage reply = MessageHandler.prepareReply(response, ACLMessage.ACCEPT_PROPOSAL, itemTeam.toString());
-								send(reply);							
+								send(reply);	
+								actionPhase = 2;
 							}
 							else
 							{
 								ACLMessage reply = MessageHandler.prepareReply(response, ACLMessage.REJECT_PROPOSAL, null);
 								send(reply);	
+								actionPhase = 2;
 							}
 							break;
 						}
@@ -236,25 +238,41 @@ public class Player extends Agent
 			}
 		}
 
-		private void duelPlayer(AID opponent) {
+		private void duelPlayer(String opponent) {
 			while(actionPhase != 2) {
 				switch(actionPhase)
 				{
 				case 0:
-					System.out.println("CHALLENGE " + opponent.getLocalName());
+					System.out.println("CHALLENGE " + opponent);
 					ACLMessage challengeMsg = MessageHandler.prepareMessage(ACLMessage.PROPOSE, opponent, "duel", teamNumber.toString());
 					send(challengeMsg);
 					actionPhase = 1;
 					break;
 				case 1:
-					MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
+					MessageTemplate mt = MessageTemplate.MatchSender(new AID(opponent, AID.ISLOCALNAME));
 					ACLMessage outcomeMessage = receive(mt);
 					if(outcomeMessage != null)
 					{
-						String[] msgArgs =  outcomeMessage.getContent().split("\\s+");
-						Outcome outcome = Utilities.adjustOutcome(Outcome.valueOf(msgArgs[0]));
-						System.out.println("OUTCOME " + outcome);
-						handleOutcome(outcome, opponent ,Integer.parseInt(msgArgs[1]));
+						String msgContent = outcomeMessage.getContent();
+						System.out.println(msgContent + " from " + outcomeMessage.getSender().getLocalName());
+						String[] msgArgs =  msgContent.split(":");
+						Outcome outcome;
+						switch(msgArgs[0])
+						{
+						case "1":
+						case "2":
+						case "3":
+						case "4":
+						case "5":
+							int oppTeam = Integer.parseInt(msgArgs[0]);
+							outcome = Utilities.getOutcome(teamNumber, oppTeam);
+							handleOutcome(outcome, opponent, oppTeam);
+							break;
+						default:
+							outcome = Utilities.adjustOutcome(Outcome.valueOf(msgArgs[0]));
+							handleOutcome(outcome, opponent ,Integer.parseInt(msgArgs[1]));
+						}
+
 						actionPhase = 2;
 					}
 					else block();
@@ -263,19 +281,19 @@ public class Player extends Agent
 		}
 
 		private void shareMapWithTeam() {
-			AID[] teammates = getTeamArray();
-			HashMap<AID, Integer> shareMap = createShareMap();
+			String[] teammates = getTeamArray();
+			HashMap<String, Integer> shareMap = createShareMap();
 			ACLMessage msg = MessageHandler.prepareMessageObject(ACLMessage.PROPOSE, null, "share-map", shareMap);
 			for(int i = 0; i < teammates.length; i++)
 			{
-				msg.addReceiver(teammates[i]);
+				MessageHandler.addReceiver(msg, teammates[i]);
 			}
 			send(msg);
 		}
 
-		private HashMap<AID, Integer> createShareMap() {
-			HashMap<AID, Integer> shareMap = new HashMap<AID, Integer>();
-			for(HashMap.Entry<AID, PlayerStruct> entry: playerMap.entrySet())
+		private HashMap<String, Integer> createShareMap() {
+			HashMap<String, Integer> shareMap = new HashMap<String, Integer>();
+			for(HashMap.Entry<String, PlayerStruct> entry: playerMap.entrySet())
 			{
 				if(entry.getValue().getTeam() != UNKNOWN)
 				{
@@ -285,14 +303,14 @@ public class Player extends Agent
 			return shareMap;
 		}
 
-		private AID[] getTeamArray() {
-			AID[] teammates = new AID[playerMap.size()/Overseer.NUMBER_OF_TEAMS];
+		private String[] getTeamArray() {
+			String[] teammates = new String[playerMap.size()/Overseer.NUMBER_OF_TEAMS];
 			int i = 0;
-			for(HashMap.Entry<AID, PlayerStruct> entry: playerMap.entrySet())
+			for(HashMap.Entry<String, PlayerStruct> entry: playerMap.entrySet())
 			{
-				if(entry.getValue().isAlive() && 
+				if(entry.getValue().isAlive() && entry.getValue().getTeam() != UNKNOWN &&
 						Outcome.SAME_TEAM == Utilities.getOutcome(myStruct.getTeam(), entry.getValue().getTeam()) && 
-						!entry.getKey().getLocalName().equals(myAgent.getAID().getLocalName()))
+						!entry.getKey().equals(myAgent.getAID().getLocalName()))
 					teammates[i] = entry.getKey();
 
 			}
@@ -301,8 +319,11 @@ public class Player extends Agent
 
 		private void sendEndRound(ACLMessage msg)
 		{
-			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.INFORM, "DONE");
-			send(reply);
+			if(inRound = true) {
+				ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.INFORM, "DONE");
+				inRound = false;
+				send(reply);
+			}
 		}
 
 
@@ -319,8 +340,7 @@ public class Player extends Agent
 				switch(msg.getConversationId())
 				{
 				case "player-death":
-					AID deadPlayer = new AID(msg.getContent(), AID.ISLOCALNAME);
-					playerMap.get(deadPlayer).turnDead();
+					playerMap.get(msg.getContent()).turnDead();
 					break;
 				case "terminate":
 					myAgent.doDelete();
@@ -348,20 +368,20 @@ public class Player extends Agent
 					Integer duelTeam = Integer.parseInt(msg.getContent());
 					Outcome outcome = Utilities.getOutcome(teamNumber, duelTeam);
 					replyOutcome(msg, outcome, teamNumber);
-					handleOutcome(outcome, msg.getSender(), duelTeam);
+					handleOutcome(outcome, msg.getSender().getLocalName(), duelTeam);
 					break;
 				case "negotiation":
-					String proposed = msg.getContent();
-					AID proposedItem = new AID(proposed, AID.ISLOCALNAME);
+					String proposedItem = msg.getContent();
 					ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.REJECT_PROPOSAL, null);
 					if(!hasInfo(proposedItem) && personality.acceptNegotiation(playerMap, proposedItem)) {
 						reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-						AID item = personality.decideWhatToNegotiate(playerMap, myStruct);
+						String item = personality.decideWhatToNegotiate(playerMap, myStruct);
 						Integer itemTeam = playerMap.get(item).getTeam();
-						reply.setContent(item.getLocalName() + " " + itemTeam.toString());
-						System.out.println("PROPOSE 2: " + item.getLocalName());
+						reply.setContent(item + ":" + itemTeam.toString());
+						System.out.println("PROPOSE 2: " + item + ":" + itemTeam.toString());
+
 						send(reply);
-						awaitProposerResponse(msg.getSender(), proposedItem);
+						awaitProposerResponse(msg.getSender().getLocalName(), proposedItem);
 					}
 					else {
 						send(reply);
@@ -382,10 +402,10 @@ public class Player extends Agent
 			else block();
 		}
 
-		private void awaitProposerResponse(AID proposer, AID proposedItem) {
+		private void awaitProposerResponse(String string, String proposedItem) {
 			ACLMessage response;
 			do {
-				MessageTemplate mt = MessageTemplate.MatchSender(proposer);
+				MessageTemplate mt = MessageTemplate.MatchSender(new AID(string, AID.ISLOCALNAME));
 				response = receive(mt);
 				if(response != null)
 				{
@@ -406,8 +426,8 @@ public class Player extends Agent
 
 		private void updateMap(Serializable serializable) {
 			@SuppressWarnings("unchecked")
-			HashMap<AID, Integer> newMap = (HashMap<AID, Integer>) serializable;
-			for(Entry<AID, Integer> entry: newMap.entrySet())
+			HashMap<String, Integer> newMap = (HashMap<String, Integer>) serializable;
+			for(Entry<String, Integer> entry: newMap.entrySet())
 			{
 				if(entry.getValue() != UNKNOWN)
 				{
@@ -416,7 +436,7 @@ public class Player extends Agent
 			}
 		}
 
-		public boolean hasInfo(AID a){
+		public boolean hasInfo(String a){
 			boolean[] retVal = {false};
 			playerMap.forEach((key, value)->{
 				if(a == key) {
@@ -429,7 +449,7 @@ public class Player extends Agent
 
 
 		private void replyOutcome(ACLMessage msg, Outcome outcome, Integer teamNumber) {
-			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.ACCEPT_PROPOSAL, outcome.toString() + " " + teamNumber);
+			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.ACCEPT_PROPOSAL, outcome.toString() + ":" + teamNumber);
 			send(reply);
 		}
 
@@ -441,7 +461,7 @@ public class Player extends Agent
 
 	}
 
-	private void handleOutcome(Outcome result, AID opponent, int oppTeam)
+	private void handleOutcome(Outcome result, String opponent, int oppTeam)
 	{
 		switch(result)
 		{
@@ -475,16 +495,16 @@ public class Player extends Agent
 
 	private void handleLoss()
 	{
-		ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.INFORM, overseer, "inform-death", this.getLocalName());
+		ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.INFORM, "overseer", "inform-death", this.getLocalName());
 		send(msg);
 	}
 
-	private void handleSameTeam(AID opponent)
+	private void handleSameTeam(String opponent)
 	{
 		playerMap.get(opponent).setTeam(teamNumber);
 	}
 
-	private void handleNeutral(AID opponent, int oppTeam)
+	private void handleNeutral(String opponent, int oppTeam)
 	{
 		playerMap.get(opponent).setTeam(oppTeam);
 	}

@@ -2,7 +2,8 @@ package personality;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import jade.core.AID;
+import java.util.concurrent.ThreadLocalRandom;
+
 import main.PlayerStruct;
 import main.Utilities;
 import main.Utilities.Outcome;
@@ -11,7 +12,7 @@ public class Negotiator implements Personality {
 	private static final int UNKNOWN = -1;
 
 	@Override
-	public Action decideAction(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
+	public Action decideAction(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct) {
 		Integer[] knownPlayers = {0};
 		Integer[] neutralPlayers = {0};
 		playerMap.forEach((key, value)->{
@@ -32,23 +33,23 @@ public class Negotiator implements Personality {
 	}
 
 	@Override
-	public AID decideWhoToBattle(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
-		ArrayList<ArrayList<AID>> myTeam = new ArrayList<ArrayList<AID>>(); 
-		ArrayList<ArrayList<AID>> neutralTeam = new ArrayList<ArrayList<AID>>(); 
-		ArrayList<ArrayList<AID>> iKillTeam = new ArrayList<ArrayList<AID>>(); 
-		ArrayList<ArrayList<AID>> killsMeTeam = new ArrayList<ArrayList<AID>>(); 
-		ArrayList<ArrayList<AID>> idkTeam = new ArrayList<ArrayList<AID>>();
-		idkTeam.add(new ArrayList<AID>());
-		neutralTeam.add(new ArrayList<AID>());
-		iKillTeam.add(new ArrayList<AID>());
-		killsMeTeam.add(new ArrayList<AID>());
-		myTeam.add(new ArrayList<AID>());
+	public String decideWhoToBattle(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct) {
+		ArrayList<ArrayList<String>> myTeam = new ArrayList<ArrayList<String>>(); 
+		ArrayList<ArrayList<String>> neutralTeam = new ArrayList<ArrayList<String>>(); 
+		ArrayList<ArrayList<String>> iKillTeam = new ArrayList<ArrayList<String>>(); 
+		ArrayList<ArrayList<String>> killsMeTeam = new ArrayList<ArrayList<String>>(); 
+		ArrayList<ArrayList<String>> idkTeam = new ArrayList<ArrayList<String>>();
+		idkTeam.add(new ArrayList<String>());
+		neutralTeam.add(new ArrayList<String>());
+		iKillTeam.add(new ArrayList<String>());
+		killsMeTeam.add(new ArrayList<String>());
+		myTeam.add(new ArrayList<String>());
 		playerMap.forEach((key, value)->{
 			if(!value.isAlive())
 			{
 			}
 			else if(value.getTeam() == UNKNOWN ) {
-				ArrayList<AID> a = idkTeam.get(0);
+				ArrayList<String> a = idkTeam.get(0);
 				a.add(key);
 			}
 			else {
@@ -66,7 +67,7 @@ public class Negotiator implements Personality {
 				}
 				case SAME_TEAM:
 				{
-					if(!key.getLocalName().equals(ownStruct.getAID().getLocalName()))
+					if(!key.equals(ownStruct.getName()))
 						myTeam.get(0).add(key);
 					break;
 				}
@@ -92,25 +93,26 @@ public class Negotiator implements Personality {
 	}
 
 	@Override
-	public boolean acceptNegotiation(HashMap<AID, PlayerStruct> playerMap, AID proposedPlayer) {
-		return playerMap.get(proposedPlayer).getTeam() == UNKNOWN;
+	public boolean acceptNegotiation(HashMap<String, PlayerStruct> playerMap, String proposedPlayer) {
+		int a = ThreadLocalRandom.current().nextInt(0, 100);
+		return a > 30;
 	}
 
 	@Override
-	public AID decideWhoToNegotiate(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
-		ArrayList<ArrayList<AID>> neutralTeam = new ArrayList<ArrayList<AID>>(); 
-		ArrayList<ArrayList<AID>> iKillTeam = new ArrayList<ArrayList<AID>>();  
-		ArrayList<ArrayList<AID>> idkTeam = new ArrayList<ArrayList<AID>>();
-		idkTeam.add(new ArrayList<AID>());
-		neutralTeam.add(new ArrayList<AID>());
-		iKillTeam.add(new ArrayList<AID>());
+	public String decideWhoToNegotiate(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct) {
+		ArrayList<ArrayList<String>> neutralTeam = new ArrayList<ArrayList<String>>(); 
+		ArrayList<ArrayList<String>> iKillTeam = new ArrayList<ArrayList<String>>();  
+		ArrayList<ArrayList<String>> idkTeam = new ArrayList<ArrayList<String>>();
+		idkTeam.add(new ArrayList<String>());
+		neutralTeam.add(new ArrayList<String>());
+		iKillTeam.add(new ArrayList<String>());
 
 		playerMap.forEach((key, value)->{
 			if(!value.isAlive())
 			{
 			}
 			else if(value.getTeam() == UNKNOWN ) {
-				ArrayList<AID> a = idkTeam.get(0);
+				ArrayList<String> a = idkTeam.get(0);
 				a.add(key);
 			}
 			else {
@@ -126,6 +128,8 @@ public class Negotiator implements Personality {
 					neutralTeam.get(0).add(key);
 					break;
 				}
+				default:
+					break;
 				}
 			}
 		});
@@ -144,26 +148,25 @@ public class Negotiator implements Personality {
 	}
 
 	@Override
-	public AID decideWhatToNegotiate(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct) {
+	public String decideWhatToNegotiate(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct) {
 
-		AID[] retVal = {null};
-		if(ownStruct.getTeam() != 1)
+		String[] retVal = {null};
 			playerMap.forEach((key, value)->{
-				if(value.getTeam() == ownStruct.getTeam()  - 1) {
-					retVal[0] = key;
-				}
-			});
-
-		else
-			playerMap.forEach((key, value)->{
-				if(value.getTeam() == 5) {
+				if(value.getTeam() != -1 && Utilities.getOutcome(ownStruct.getTeam(), value.getTeam()) == Outcome.LOSS) {
 					retVal[0] = key;
 				}
 			});
 
 		if(retVal[0] == null){
 			playerMap.forEach((key, value)->{
-				if(value.getTeam() != ownStruct.getTeam()) {
+				if(value.getTeam() != -1 && value.getTeam() != ownStruct.getTeam()) {
+					retVal[0] = key;
+				}
+			});
+		}
+		if(retVal[0] == null){
+			playerMap.forEach((key, value)->{
+				if(value.getTeam() != -1) {
 					retVal[0] = key;
 				}
 			});

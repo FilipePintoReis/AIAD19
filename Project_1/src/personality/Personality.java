@@ -1,7 +1,7 @@
 package personality;
 
 import java.util.HashMap;
-import jade.core.AID;
+
 import main.PlayerStruct;
 
 public interface Personality {
@@ -12,9 +12,9 @@ public interface Personality {
 		Abstain
 	}
 	
-	public Action decideAction(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct);
-	public AID decideWhoToBattle(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct);
-	public boolean acceptNegotiation(HashMap<AID, PlayerStruct> playerMap, AID proposedPlayer);
-	public AID decideWhatToNegotiate(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct);
-	public AID decideWhoToNegotiate(HashMap<AID, PlayerStruct> playerMap, PlayerStruct ownStruct);
+	public Action decideAction(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct);
+	public String decideWhoToBattle(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct);
+	public boolean acceptNegotiation(HashMap<String, PlayerStruct> playerMap, String proposedItem);
+	public String decideWhatToNegotiate(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct);
+	public String decideWhoToNegotiate(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct);
 }

@@ -2,7 +2,7 @@ package main;
 
 import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
-import jade.core.AID;
+
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
@@ -19,7 +19,7 @@ import main.Utilities.Outcome;
 public class Overseer extends Agent
 {
 	public final static int NUMBER_OF_TEAMS = 5;	
-	private final int ROUND_SLEEP = 50;
+	private final int ROUND_SLEEP = 100;
 
 	//Sum of *_PROB should be 1.0
 
@@ -43,9 +43,9 @@ public class Overseer extends Agent
 
 	private final int TIME_TO_WAKE = 5 * 1000;
 
-	private HashMap<AID, PlayerStruct> playerMap;
+	private HashMap<String, PlayerStruct> playerMap;
 
-	private AID[] players;
+	private String[] players;
 
 	private boolean inRound = false;
 
@@ -74,9 +74,9 @@ public class Overseer extends Agent
 			try
 			{
 				DFAgentDescription[] result = DFService.search(myAgent, template);
-				players = new AID[result.length];
+				players = new String[result.length];
 				for(int i = 0; i < result.length; i++)
-					players[i] = result[i].getName();
+					players[i] = result[i].getName().getLocalName();
 
 			} catch(FIPAException fe) 
 			{
@@ -85,7 +85,7 @@ public class Overseer extends Agent
 
 			for(int i = 0; i < players.length; i++)
 			{
-				System.out.println(players[i].getLocalName());
+				System.out.println(players[i]);
 			}
 
 			informPlayerTeams();
@@ -104,7 +104,7 @@ public class Overseer extends Agent
 				ACLMessage informTeam = MessageHandler.prepareMessage(ACLMessage.INFORM, null, "team-number", i.toString());
 				for(int j = 0; j < players.length / NUMBER_OF_TEAMS; j++)
 				{
-					informTeam.addReceiver(players[playerIndex]);
+					MessageHandler.addReceiver(informTeam, players[playerIndex]);
 					playerMap.put(players[playerIndex], new PlayerStruct(players[playerIndex] , i));
 					playerIndex++;
 				}
@@ -115,7 +115,7 @@ public class Overseer extends Agent
 			ACLMessage playersListMsg = MessageHandler.prepareMessageObject(ACLMessage.INFORM, null, "player-list", players);
 			for(int i = 0; i < players.length; i++)
 			{
-				playersListMsg.addReceiver(players[i]);
+				MessageHandler.addReceiver(playersListMsg, players[i]);
 			}
 			send(playersListMsg);
 		}
@@ -183,8 +183,8 @@ public class Overseer extends Agent
 			inRound = true;
 		}
 
-		private void sendStartRound(AID player) {
-			ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.REQUEST, player, "round-start", roundNumber.toString());
+		private void sendStartRound(String players) {
+			ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.REQUEST, players, "round-start", "ROUND" + roundNumber.toString());
 			send(msg);
 		}
 
@@ -212,7 +212,7 @@ public class Overseer extends Agent
 					break;
 				}
 				case "inform-death": {
-					playerMap.get(msg.getSender()).turnDead();
+					playerMap.get(msg.getSender().getLocalName()).turnDead();
 					propagateDeath(msg.getContent());
 				}
 				}
@@ -225,7 +225,7 @@ public class Overseer extends Agent
 			System.out.println("DEATH " + playerName);
 			for(int i = 0; i < players.length; i++)
 			{
-				msg.addReceiver(players[i]);
+				MessageHandler.addReceiver(msg, players[i]);
 			}
 			send(msg);
 		}
@@ -234,11 +234,11 @@ public class Overseer extends Agent
 	private boolean gameEnd() {
 		boolean retVal = true;
 
-		for(HashMap.Entry<AID, PlayerStruct> entryI: playerMap.entrySet())
+		for(HashMap.Entry<String, PlayerStruct> entryI: playerMap.entrySet())
 		{
 			Integer teamI = entryI.getValue().getTeam();
 			if(entryI.getValue().isAlive()) {
-				for(HashMap.Entry<AID, PlayerStruct> entryJ: playerMap.entrySet())
+				for(HashMap.Entry<String, PlayerStruct> entryJ: playerMap.entrySet())
 				{
 					if(entryJ.getValue().isAlive())
 						if(Utilities.getOutcome(entryJ.getValue().getTeam(), teamI) == Outcome.LOSS)
@@ -254,7 +254,7 @@ public class Overseer extends Agent
 		sendTerminateMsg();
 
 		int[] teamSurvivors = {0, 0, 0, 0, 0};
-		for(HashMap.Entry<AID, PlayerStruct> entryJ: playerMap.entrySet())
+		for(HashMap.Entry<String, PlayerStruct> entryJ: playerMap.entrySet())
 		{
 			if(entryJ.getValue().isAlive())
 			{
@@ -272,7 +272,7 @@ public class Overseer extends Agent
 		ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.PROPAGATE, null, "terminate", null);
 		for(int i = 0; i < players.length; i++)
 		{
-			msg.addReceiver(players[i]);
+			MessageHandler.addReceiver(msg, players[i]);
 		}
 		send(msg);
 		doDelete();
