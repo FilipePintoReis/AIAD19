@@ -19,7 +19,7 @@ import main.Utilities.Outcome;
 public class Overseer extends Agent
 {
 	public final static int NUMBER_OF_TEAMS = 5;	
-	private final int ROUND_SLEEP = 100;
+	private final int ROUND_SLEEP = 500;
 
 	//Sum of *_PROB should be 1.0
 

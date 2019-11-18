@@ -22,7 +22,7 @@ import personality.*;
 @SuppressWarnings("serial")
 public class Player extends Agent
 {
-	private int ROUND_SLEEP = 100;
+	private int ROUND_SLEEP = 500;
 
 	private static final int UNKNOWN = -1;
 	private Personality personality = null;
