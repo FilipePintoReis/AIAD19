@@ -151,11 +151,11 @@ public class Negotiator implements Personality {
 	public String decideWhatToNegotiate(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct) {
 
 		String[] retVal = {null};
-			playerMap.forEach((key, value)->{
-				if(value.getTeam() != -1 && Utilities.getOutcome(ownStruct.getTeam(), value.getTeam()) == Outcome.LOSS) {
-					retVal[0] = key;
-				}
-			});
+		playerMap.forEach((key, value)->{
+			if(value.getTeam() != -1 && Utilities.getOutcome(ownStruct.getTeam(), value.getTeam()) == Outcome.LOSS) {
+				retVal[0] = key;
+			}
+		});
 
 		if(retVal[0] == null){
 			playerMap.forEach((key, value)->{
@@ -173,4 +173,30 @@ public class Negotiator implements Personality {
 		}
 		return retVal[0];
 	}
+
+	public String decideWhatToCounterNegotiate(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct, String proposal) {
+		String[] retVal = {null};
+		playerMap.forEach((key, value)->{
+			if(value.getTeam() != -1 && Utilities.getOutcome(ownStruct.getTeam(), value.getTeam()) == Outcome.LOSS && proposal != key) {
+				retVal[0] = key;
+			}
+		});
+
+		if(retVal[0] == null){
+			playerMap.forEach((key, value)->{
+				if(value.getTeam() != -1 && value.getTeam() != ownStruct.getTeam() && proposal != key) {
+					retVal[0] = key;
+				}
+			});
+		}
+		if(retVal[0] == null){
+			playerMap.forEach((key, value)->{
+				if(value.getTeam() != -1 && proposal != key) {
+					retVal[0] = key;
+				}
+			});
+		}
+		return retVal[0];
+	}
+
 }

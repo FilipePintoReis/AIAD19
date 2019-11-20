@@ -22,12 +22,15 @@ import personality.*;
 @SuppressWarnings("serial")
 public class Player extends Agent
 {
-	private int ROUND_SLEEP = 1000;
+	private int ROUND_SLEEP = 100;
 
 	private static final int UNKNOWN = -1;
 	private Personality personality = null;
 	private PlayerStruct myStruct;
 
+	private boolean inNegotiation = false;
+	private String negotiationClient = null;
+	
 	public Integer teamNumber;
 
 	private HashMap<String, PlayerStruct> playerMap = new HashMap<String, PlayerStruct>();
@@ -151,7 +154,7 @@ public class Player extends Agent
 
 		private void roundAction() {
 			if(myStruct.isAlive()) {
-				System.out.println("\nTURN " + myAgent.getLocalName() + " of " + teamNumber);
+				System.out.println("\n" + myAgent.getLocalName() + ": TURN " + myAgent.getLocalName() + " of " + teamNumber);
 				try {
 					Thread.sleep(ROUND_SLEEP);
 				} catch (InterruptedException e) {
@@ -166,7 +169,7 @@ public class Player extends Agent
 					if(opponent != null) {
 						duelPlayer(opponent);
 					}
-					else System.out.println("SKIP");
+					else System.out.println(myAgent.getLocalName() + ": SKIP");
 					break;
 				case Negotiate:
 					actionPhase = 0;
@@ -176,10 +179,11 @@ public class Player extends Agent
 						negotiate(client, item);
 					break;
 				case Abstain:
-					System.out.println("ABSTAIN");
+					System.out.println(myAgent.getLocalName() + ": ABSTAIN");
 				default:
 				}
 				shareMapWithTeam();
+				actionPhase = 0;
 			}
 			else {
 				//				System.out.println("SLEEP " + myAgent.getLocalName());
@@ -193,7 +197,7 @@ public class Player extends Agent
 				{
 				case 0:
 					ACLMessage msg = MessageHandler.prepareMessage(ACLMessage.PROPOSE, client, "negotiation", item);
-					System.out.println("PROPOSE 1: " + item);
+					System.out.println(myAgent.getLocalName() + ": PROPOSE 1: " + item + " to " + client);
 					send(msg);
 					actionPhase = 1;
 					break;
@@ -208,18 +212,21 @@ public class Player extends Agent
 						{
 							String[] args = response.getContent().split(":");
 							String clientProposal = args[0];
-							if(personality.acceptNegotiation(playerMap, clientProposal))
+							System.out.println(myAgent.getLocalName() + ": Client Accepted - " + response.getContent() + " from " + response.getSender().getLocalName() + " about " + response.getConversationId());
+							if(!hasInfo(clientProposal) && personality.acceptNegotiation(playerMap, clientProposal))
 							{
 								Integer clientProposalTeam = Integer.parseInt(args[1]);
 								playerMap.get(clientProposal).setTeam(clientProposalTeam);
 
 								Integer itemTeam = playerMap.get(item).getTeam();
 								ACLMessage reply = MessageHandler.prepareReply(response, ACLMessage.ACCEPT_PROPOSAL, itemTeam.toString());
+								System.out.println(myAgent.getLocalName() + ": COUNTER  " + response.getSender().getLocalName());
 								send(reply);	
 								actionPhase = 2;
 							}
 							else
 							{
+								System.out.println(myAgent.getLocalName() + ": REJECT to  " + response.getSender().getLocalName());
 								ACLMessage reply = MessageHandler.prepareReply(response, ACLMessage.REJECT_PROPOSAL, null);
 								send(reply);	
 								actionPhase = 2;
@@ -244,7 +251,7 @@ public class Player extends Agent
 				switch(actionPhase)
 				{
 				case 0:
-					System.out.println("CHALLENGE " + opponent);
+					System.out.println(myAgent.getLocalName() + ": CHALLENGE " + opponent);
 					ACLMessage challengeMsg = MessageHandler.prepareMessage(ACLMessage.PROPOSE, opponent, "duel", teamNumber.toString());
 					send(challengeMsg);
 					actionPhase = 1;
@@ -254,8 +261,9 @@ public class Player extends Agent
 					ACLMessage outcomeMessage = receive(mt);
 					if(outcomeMessage != null)
 					{
+
 						String msgContent = outcomeMessage.getContent();
-						System.out.println(msgContent + " from " + outcomeMessage.getSender().getLocalName());
+						System.out.println(myAgent.getLocalName() + ": Duel Response " + msgContent + " from " + outcomeMessage.getSender().getLocalName() + " about " + outcomeMessage.getConversationId());
 						String[] msgArgs =  msgContent.split(":");
 						Outcome outcome;
 						switch(msgArgs[0])
@@ -378,15 +386,16 @@ public class Player extends Agent
 					ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.REJECT_PROPOSAL, null);
 					if(!hasInfo(proposedItem) && personality.acceptNegotiation(playerMap, proposedItem)) {
 						reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-						String item = personality.decideWhatToNegotiate(playerMap, myStruct);
+						String item = personality.decideWhatToCounterNegotiate(playerMap, myStruct, proposedItem);
 						Integer itemTeam = playerMap.get(item).getTeam();
 						reply.setContent(item + ":" + itemTeam.toString());
-						System.out.println("PROPOSE 2: " + item + ":" + itemTeam.toString());
+						System.out.println(myAgent.getLocalName() + ": PROPOSE 2: " + item + ":" + itemTeam.toString());
 
 						send(reply);
 						awaitProposerResponse(msg.getSender().getLocalName(), proposedItem);
 					}
 					else {
+						System.out.println(myAgent.getLocalName() + ": Reject proposal of " + proposedItem + " from " + msg.getSender().getLocalName());
 						send(reply);
 					}
 					break;
@@ -438,18 +447,6 @@ public class Player extends Agent
 				}
 			}
 		}
-
-		public boolean hasInfo(String a){
-			boolean[] retVal = {false};
-			playerMap.forEach((key, value)->{
-				if(a == key) {
-					if(value.getTeam() == UNKNOWN)
-						retVal[0] = true;
-				}
-			});
-			return retVal[0];
-		}
-
 
 		private void replyOutcome(ACLMessage msg, Outcome outcome, Integer teamNumber) {
 			ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.ACCEPT_PROPOSAL, outcome.toString() + ":" + teamNumber);
@@ -510,6 +507,17 @@ public class Player extends Agent
 	private void handleNeutral(String opponent, int oppTeam)
 	{
 		playerMap.get(opponent).setTeam(oppTeam);
+	}
+
+	public boolean hasInfo(String a){
+		boolean[] retVal = {false};
+		playerMap.forEach((key, value)->{
+			if(a == key) {
+				if(value.getTeam() == UNKNOWN)
+					retVal[0] = true;
+			}
+		});
+		return retVal[0];
 	}
 
 	protected void takeDown() {

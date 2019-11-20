@@ -17,4 +17,5 @@ public interface Personality {
 	public boolean acceptNegotiation(HashMap<String, PlayerStruct> playerMap, String proposedItem);
 	public String decideWhatToNegotiate(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct);
 	public String decideWhoToNegotiate(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct);
+	public String decideWhatToCounterNegotiate(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct, String proposal);
 }

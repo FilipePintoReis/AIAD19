@@ -91,7 +91,7 @@ public class Hunter implements Personality {
 	public boolean acceptNegotiation(HashMap<String, PlayerStruct> playerMap, String proposedPlayer) {
 		int a = ThreadLocalRandom.current().nextInt(0, 100);
 		return a > 30;
-		}
+	}
 
 	@Override
 	public String decideWhoToNegotiate(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct) {
@@ -152,20 +152,46 @@ public class Hunter implements Personality {
 			}
 		});
 
-	if(retVal[0] == null){
+		if(retVal[0] == null){
+			playerMap.forEach((key, value)->{
+				if(value.getTeam() != -1 && value.getTeam() != ownStruct.getTeam()) {
+					retVal[0] = key;
+				}
+			});
+		}
+		if(retVal[0] == null){
+			playerMap.forEach((key, value)->{
+				if(value.getTeam() != -1) {
+					retVal[0] = key;
+				}
+			});
+		}
+		return retVal[0];
+	}
+
+	public String decideWhatToCounterNegotiate(HashMap<String, PlayerStruct> playerMap, PlayerStruct ownStruct, String proposal) {
+		String[] retVal = {null};
 		playerMap.forEach((key, value)->{
-			if(value.getTeam() != -1 && value.getTeam() != ownStruct.getTeam()) {
+			if(value.getTeam() != -1 && Utilities.getOutcome(ownStruct.getTeam(), value.getTeam()) == Outcome.LOSS && proposal != key) {
 				retVal[0] = key;
 			}
 		});
+
+		if(retVal[0] == null){
+			playerMap.forEach((key, value)->{
+				if(value.getTeam() != -1 && value.getTeam() != ownStruct.getTeam() && proposal != key) {
+					retVal[0] = key;
+				}
+			});
+		}
+		if(retVal[0] == null){
+			playerMap.forEach((key, value)->{
+				if(value.getTeam() != -1 && proposal != key) {
+					retVal[0] = key;
+				}
+			});
+		}
+		return retVal[0];
 	}
-	if(retVal[0] == null){
-		playerMap.forEach((key, value)->{
-			if(value.getTeam() != -1) {
-				retVal[0] = key;
-			}
-		});
-	}
-	return retVal[0];
-}
+
 }
