@@ -220,7 +220,7 @@ public class Player extends Agent
 
 								Integer itemTeam = playerMap.get(item).getTeam();
 								ACLMessage reply = MessageHandler.prepareReply(response, ACLMessage.ACCEPT_PROPOSAL, itemTeam.toString());
-								System.out.println(myAgent.getLocalName() + ": COUNTER  " + response.getSender().getLocalName());
+								System.out.println(myAgent.getLocalName() + ": FINAL TRADE  " + itemTeam + " to " + response.getSender().getLocalName());
 								send(reply);	
 								actionPhase = 2;
 							}
@@ -228,7 +228,7 @@ public class Player extends Agent
 							{
 								System.out.println(myAgent.getLocalName() + ": REJECT to  " + response.getSender().getLocalName());
 								ACLMessage reply = MessageHandler.prepareReply(response, ACLMessage.REJECT_PROPOSAL, null);
-								send(reply);	
+								send(reply);
 								actionPhase = 2;
 							}
 							break;
@@ -236,6 +236,7 @@ public class Player extends Agent
 						case ACLMessage.REJECT_PROPOSAL:
 						{
 							actionPhase = 2;
+							System.out.println(myAgent.getLocalName() + ": Client Rejected - " + response.getContent() + " from " + response.getSender().getLocalName() + " about " + response.getConversationId());
 							break;
 						}
 						}
@@ -383,18 +384,17 @@ public class Player extends Agent
 					break;
 				case "negotiation":
 					String proposedItem = msg.getContent();
-					ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.REJECT_PROPOSAL, null);
 					if(!hasInfo(proposedItem) && personality.acceptNegotiation(playerMap, proposedItem)) {
-						reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
 						String item = personality.decideWhatToCounterNegotiate(playerMap, myStruct, proposedItem);
 						Integer itemTeam = playerMap.get(item).getTeam();
-						reply.setContent(item + ":" + itemTeam.toString());
+						ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.ACCEPT_PROPOSAL, item + ":" + itemTeam.toString());
 						System.out.println(myAgent.getLocalName() + ": PROPOSE 2: " + item + ":" + itemTeam.toString());
 
 						send(reply);
 						awaitProposerResponse(msg.getSender().getLocalName(), proposedItem);
 					}
 					else {
+						ACLMessage reply = MessageHandler.prepareReply(msg, ACLMessage.REJECT_PROPOSAL, null);
 						System.out.println(myAgent.getLocalName() + ": Reject proposal of " + proposedItem + " from " + msg.getSender().getLocalName());
 						send(reply);
 					}
@@ -415,25 +415,30 @@ public class Player extends Agent
 		}
 
 		private void awaitProposerResponse(String string, String proposedItem) {
+			boolean finished = false;
 			ACLMessage response;
 			do {
 				MessageTemplate mt = MessageTemplate.MatchSender(new AID(string, AID.ISLOCALNAME));
+//				System.out.println(string);
 				response = receive(mt);
 				if(response != null)
 				{
+					System.out.println(myAgent.getLocalName() + ": END TRADE " + response.getContent() + " from " + response.getSender().getLocalName());
 					switch(response.getPerformative())
 					{
 					case ACLMessage.ACCEPT_PROPOSAL:
+						System.out.println(myAgent.getLocalName() + ": Proposer ACCEPT from " + response.getSender().getLocalName() + " content- " + response.getContent());
 						Integer proposedItemTeam = Integer.parseInt(response.getContent());
 						playerMap.get(proposedItem).setTeam(proposedItemTeam);
 						break;
 					case ACLMessage.REJECT_PROPOSAL:
+						System.out.println(myAgent.getLocalName() + ": Proposer REJECT from " + response.getSender().getLocalName() + " content- " + response.getContent());
 						break;
 					}
+					finished =  true;
 				}
-				else block();
 			}
-			while(response != null);
+			while(!finished);
 		}
 
 		private void updateMap(Serializable serializable) {
