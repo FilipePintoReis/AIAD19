@@ -24,9 +24,12 @@ public class Negotiator implements Personality {
 				}
 			}
 		});
+		double randomDouble = Math.random();
+		randomDouble = randomDouble * 100 + 1;
+		int randomInt = (int) randomDouble;
 		float probability = neutralPlayers[0]/knownPlayers[0] * knownPlayers[0]/playerMap.size();
 		boolean retval2 = probability >= 50 ? true: false;
-		if(retval2)
+		if(retval2 || randomInt < 10)
 			return Action.Duel;
 		else
 			return Action.Negotiate;

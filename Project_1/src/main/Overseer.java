@@ -19,25 +19,25 @@ import main.Utilities.Outcome;
 public class Overseer extends Agent
 {
 	public final static int NUMBER_OF_TEAMS = 5;	
-	private final int ROUND_SLEEP = 100;
+	private final int ROUND_SLEEP = 50;
 
 	//Sum of *_PROB should be 1.0
 
 	private float team_personality_prob[][] = {
 			{
-				20, 40, 50
+				0, 100, 0
 			},
 			{
-				20, 40, 50
+				100, 0, 0
 			},
 			{
-				20, 40, 50
+				0, 0, 100
 			},
 			{
-				20, 40, 50
+				0, 100, 0
 			},
 			{
-				20, 40, 50
+				0, 0, 100
 			}
 	};
 
@@ -262,10 +262,12 @@ public class Overseer extends Agent
 				teamSurvivors[entryJ.getValue().getTeam() - 1]++;
 			}
 		}
-		System.out.println("\n\n\nFINAL HEADCOUNT:");
+		System.out.println("\n\n\nFinal headcount:");
 		for(int i = 0; i < teamSurvivors.length; i++)
 		{
-			System.out.println((i + 1) + ": " + teamSurvivors[i]);
+			System.out.print("Team " + (i + 1) + ": " + teamSurvivors[i] + " survivor");
+			if(teamSurvivors[i] > 1 || teamSurvivors[i] == 0) System.out.println("s.");
+			else System.out.println(".");
 		}
 	}
 
