@@ -1,5 +1,9 @@
 package dataMining;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
 public class CSVReader {
 	private final int NUMBER_OF_TEAMS = 5;
 	private final int NUMBER_OF_PERSONALITIES = 3;
