@@ -53,9 +53,18 @@ public class Overseer extends Agent
 	{
 		playerMap = new HashMap<>();
 		//		personalityDistribution = Utilities.personalityDistribution(PASSIVE_PROB, NEGOTIATOR_PROB, HUNTER_PROB, NUMBER_OF_TEAMS);
-		addBehaviour(new CheckPlayers(this, TIME_TO_WAKE));
+		//addBehaviour(new CheckPlayers(this, TIME_TO_WAKE));
 	}
 
+	private void parseArguments() {
+		Object[] args = getArguments();
+		for( int i = 0; i < args.length; i++)
+		{
+			System.out.println(args[i].toString());
+		}
+	}
+	
+	
 	/*
 	 * Checks for new players
 	 */
