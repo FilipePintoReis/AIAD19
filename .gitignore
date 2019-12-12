@@ -3,3 +3,4 @@
 */bin/main/*.class
 Project_1/bin/personality/*.class
 .*
+Project_1/src/dataMining/input.csv
